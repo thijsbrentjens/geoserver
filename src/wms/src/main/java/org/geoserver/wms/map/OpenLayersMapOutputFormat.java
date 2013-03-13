@@ -46,6 +46,9 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 
+// Thijs Brentjens: for fixing XSS vulnerability
+import org.owasp.encoder.*;
+
 /**
  * 
  * @see RawMapResponse
@@ -279,8 +282,9 @@ public class OpenLayersMapOutputFormat implements GetMapOutputFormat {
             // this won't work for multi-valued parameters, but we have none so
             // far (they are common just in HTML forms...)
             Map<String, String> map = new HashMap<String, String>();
-            map.put("name", paramName);
-            map.put("value", en.getValue());
+			// Thijs Brentjens: encode using OWASP encoder to avoid XSS vulnerability
+            map.put("name", Encode.forJavaScript(paramName));
+            map.put("value", Encode.forJavaScript(en.getValue()));
             result.add(map);
         }
 
