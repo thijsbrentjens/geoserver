@@ -18,6 +18,8 @@ import org.geoserver.ows.URLMangler;
 import org.geoserver.ows.URLMangler.URLType;
 import org.geoserver.platform.GeoServerExtensions;
 
+// Thijs Brentjens (thijs@brentjensgeoict.nl): for fixing XSS vulnerability
+import org.owasp.encoder.*;
 
 /**
  * Utility class performing operations related to http respones.
@@ -45,49 +47,9 @@ public class ResponseUtils {
         if (inData == null) {
             return null;
         }
-
-        //if no special characters, just return
-        //(for optimization. Though may be an overhead, but for most of the
-        //strings, this will save time)
-        if ((inData.indexOf('&') == -1) && (inData.indexOf('<') == -1)
-                && (inData.indexOf('>') == -1) && (inData.indexOf('\'') == -1)
-                && (inData.indexOf('\"') == -1)) {
-            return inData;
-        }
-
-        //get the length of input String
-        int length = inData.length();
-
-        //create a StringBuffer of double the size (size is just for guidance
-        //so as to reduce increase-capacity operations. The actual size of
-        //the resulting string may be even greater than we specified, but is
-        //extremely rare)
-        StringBuffer buffer = new StringBuffer(2 * length);
-
-        char charToCompare;
-
-        //iterate over the input String
-        for (int i = 0; i < length; i++) {
-            charToCompare = inData.charAt(i);
-
-            //if the ith character is special character, replace by code
-            if (charToCompare == '&') {
-                buffer.append("&amp;");
-            } else if (charToCompare == '<') {
-                buffer.append("&lt;");
-            } else if (charToCompare == '>') {
-                buffer.append("&gt;");
-            } else if (charToCompare == '\"') {
-                buffer.append("&quot;");
-            } else if (charToCompare == '\'') {
-                buffer.append("&apos;");
-            } else {
-                buffer.append(charToCompare);
-            }
-        }
-
-        //return the encoded string
-        return buffer.toString();
+		
+		// Thijs Brentjens (thijs@brentjensgeoict.nl): use the OWASP encoder
+		return Encode.forXml(inData);
     }
 
     /**

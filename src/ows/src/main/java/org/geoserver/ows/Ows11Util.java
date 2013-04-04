@@ -30,6 +30,9 @@ import org.geotools.xml.EMFUtils;
 import org.opengis.feature.type.Name;
 import org.opengis.util.InternationalString;
 
+// Thijs Brentjens: for fixing XSS vulnerability
+import org.owasp.encoder.*;
+
 public class Ows11Util {
 
     static Ows11Factory f = Ows11Factory.eINSTANCE;
@@ -126,7 +129,7 @@ public class Ows11Util {
         //add the message
         StringBuffer sb = new StringBuffer();
         OwsUtils.dumpExceptionMessages(exception, sb, true);
-        e.getExceptionText().add(sb.toString());
+        e.getExceptionText().add(Encode.forXml(sb.toString()));
         e.getExceptionText().addAll(exception.getExceptionText());
 
         if(verboseExceptions) {

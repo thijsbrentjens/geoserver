@@ -203,9 +203,9 @@ public class ServiceException extends RuntimeException {
         
         StringBuffer sb = new StringBuffer(msg);
         for (Iterator it = exceptionText.iterator(); it.hasNext();) {
-            String extraMessage =  Encode.forXml((String) it.next());
+            String extraMessage =  (String) it.next();
             sb.append(NEW_LINE).append(extraMessage);
         }
-        return sb.toString();
+        return Encode.forXml(sb.toString());
     }
 }
