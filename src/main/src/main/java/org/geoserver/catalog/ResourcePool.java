@@ -1195,12 +1195,17 @@ public class ResourcePool {
 
         return null;
     }
-    
-    /**
-     * Returns the {@link WebMapServer} for a {@link WMSStoreInfo}  object
-     * @param info The WMS configuration
-     * @throws IOException
-     */
+
+
+    public void setWebMapServer(WMSStoreInfo info, WebMapServer webMapServer){
+        wmsCache.put(info.getId(),webMapServer);
+    }
+
+        /**
+        * Returns the {@link WebMapServer} for a {@link WMSStoreInfo}  object
+        * @param info The WMS configuration
+        * @throws IOException
+        */
     public WebMapServer getWebMapServer(WMSStoreInfo info) throws IOException {
         try {
             String id = info.getId();

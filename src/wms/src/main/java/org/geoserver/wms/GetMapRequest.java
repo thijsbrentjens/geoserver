@@ -4,18 +4,7 @@
  */
 package org.geoserver.wms;
 
-import java.awt.Color;
-import java.awt.geom.Point2D;
-import java.awt.image.IndexColorModel;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
+import com.vividsolutions.jts.geom.Envelope;
 import org.geoserver.ows.util.CaseInsensitiveMap;
 import org.geotools.styling.Style;
 import org.geotools.util.DateRange;
@@ -23,7 +12,12 @@ import org.geotools.util.NumberRange;
 import org.opengis.filter.Filter;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-import com.vividsolutions.jts.geom.Envelope;
+import java.awt.*;
+import java.awt.geom.Point2D;
+import java.awt.image.IndexColorModel;
+import java.net.URL;
+import java.util.*;
+import java.util.List;
 
 /**
  * Represents a WMS GetMap request. as a extension to the WMS spec 1.1.

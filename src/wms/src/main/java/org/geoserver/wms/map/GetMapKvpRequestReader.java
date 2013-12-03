@@ -1093,7 +1093,7 @@ public class GetMapKvpRequestReader extends KvpRequestReader implements HttpServ
      * 
      * @throws ServiceException
      */
-    private static void checkStyle(Style style, MapLayerInfo mapLayerInfo) throws ServiceException {
+    public static void checkStyle(Style style, MapLayerInfo mapLayerInfo) throws ServiceException {
         if (mapLayerInfo.getType() == mapLayerInfo.TYPE_RASTER) {
             // REVISIT: hey, don't we have to check it for rasters now that we support raster
             // symbolizer?
@@ -1122,6 +1122,11 @@ public class GetMapKvpRequestReader extends KvpRequestReader implements HttpServ
                 throw new RuntimeException("Error getting FeatureType, this should never happen!",
                         ioe);
             }
+        }
+
+        //En caso de una cascada WMS se ignorará el chequeo de atributos existentes en el estilo
+        if (mapLayerInfo.getType() == MapLayerInfo.TYPE_WMS){
+            return;
         }
 
         // check all attributes required by the style are available
