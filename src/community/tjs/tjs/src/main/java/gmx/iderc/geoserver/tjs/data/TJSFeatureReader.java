@@ -85,13 +85,15 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         SimpleFeature wfsFeature = featureReader.next();
         featureBuilder.addAll(wfsFeature.getAttributes());
 
-        Name frameworkKey = datasetInfo.getFramework().getFrameworkKey().getAttribute().getName();
+        String frameworkKey = datasetInfo.getFramework().getFrameworkKey().getName();
+
         Object keyValue = wfsFeature.getAttribute(frameworkKey);
 
         for (ColumnInfo column : datasetInfo.getColumns()) {
             featureBuilder.set(column.getName(), lookup(keyValue, column.getName()));
         }
-        return featureBuilder.buildFeature(wfsFeature.getID());
+        SimpleFeature ft = featureBuilder.buildFeature(wfsFeature.getID());
+        return ft;
     }
 
     public boolean hasNext() throws IOException {

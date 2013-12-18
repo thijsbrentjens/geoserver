@@ -35,6 +35,10 @@ public class TJSStore implements DataStoreInfo {
         return store;
     }
 
+    public TJS_1_0_0_DataStore getStore() {
+        return store;
+    }
+
     public Catalog getCatalog() {
         return catalog;
     }

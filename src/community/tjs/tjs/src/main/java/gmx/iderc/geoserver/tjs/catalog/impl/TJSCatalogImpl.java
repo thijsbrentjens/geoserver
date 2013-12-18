@@ -177,6 +177,7 @@ public class TJSCatalogImpl implements TJSCatalog {
         dataSets.put(datasetInfo.getId(), datasetInfo);
     }
 
+
     public void remove(DatasetInfo datasetInfo) {
         frameworkDataSets.remove(datasetInfo.getFramework().getId(), datasetInfo);
         storeDataSets.remove(datasetInfo.getDataStore().getId(), datasetInfo);
