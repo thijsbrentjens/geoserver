@@ -554,7 +554,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         StringWriter writer = new StringWriter();
                         // TODO: write CRS information
                         // fjson.writeCRS(dataCRS, writer);
-                        // fjson.setEncodeFeatureCollectionCRS(true);
+                        fjson.setEncodeFeatureCollectionCRS(true);
                         // fjson.setEncodeFeatureCollectionBounds(true);
 
                         // looping over the features
