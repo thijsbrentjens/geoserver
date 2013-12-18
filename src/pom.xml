@@ -11,11 +11,13 @@
  <version>2.2.4</version>
  <name>GeoServer</name>
 
- <scm>
+  <!-- Thijs: for TJS, do not update git code automatically -->
+
+ <!-- <scm>
   <connection>scm:git:git://github.com/geoserver/geoserver.git</connection>
   <developerConnection>scm:git:[fetch=]git://github.com/geoserver/geoserver.git[push=]git@github.com:geoserver/geoserver.git</developerConnection>
   <url>https://github.com/geoserver/geoserver</url>
- </scm>
+ </scm>   -->
 
  <organization>
   <name>The Open Planning Project</name>
