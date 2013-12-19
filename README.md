@@ -51,10 +51,9 @@ To install, you could either add the built libraries or compile the code yoursel
 
 Download the following ZIP-file with jars and place them in geoserver/WEB-INF/lib/:
 
-Currently, the plugin adds GeoJSON output. After Then add the plugin jars, including 
+https://github.com/thijsbrentjens/geoserver/blob/tjs_2.2.x/binaries/libs-20131219.zip
 
-There is a WAR-file available online which includes these changes and the plugin. This needs testing as well.
-
+Restart the geoserver application after adding the jars.
 
 Compilation
 =====================
