@@ -1,9 +1,10 @@
 Geoserver for TJS
 =====================
-
 Geoserver TJS repository.
 
-The community plugin TJS will add support for Table Joining Services to Geoserver. Code is based on code of GeoCuba, code imported by Thijs Brentjens on request of GeoCuba. Minor changes on the Geoserver core code for the WMS and Catalog are required.
+The community plugin TJS will add support for Table Joining Services to Geoserver. Code is based on code of GeoCuba/GeoMix, imported by Thijs Brentjens on request of GeoCuba/GeoMix. Minor changes on the Geoserver core code for the WMS and Catalog are required.
+
+This extension is under development. Please read this carefully. Any feedback is welcome.
 
 Features
 ========
@@ -17,7 +18,7 @@ The TJS OGC webservice interface supports almost all TJS operations. It allows f
 - creating joins using JoinData
 - output of joins as WMS layers, with GetfeatureInfo is supported. The TJS extension has (some) support for SLD.
 
-All the above features hev been developed by GeoCuba.
+All the above features hev been developed by GeoCuba/GeoMix.
 
 In another project, Geonovum has extended the above functionality with extra output mechanism to download a geoJSON file of the join. This is still work in progress.
 
@@ -34,33 +35,36 @@ Among things to do are:
 - support for download of other output formats, like shapefiles and KML
 - support for management of joined output files and removing joins / clearing the cache after a pre-configured time
 - access restrictions on operations (TODO: test if Geoserver securtiy system works properly already)
+- user manual
+- fix tests for the postgres connection of data stores
 
 Related projects
 ===========
 For demonstraton and test purposes a basic tool is developed. This tool allows users to upload a CSV-file and join that to a spatial framework (spatial dataset)
-TODO: reference to the tool.
+
+TODO: reference to the tool as soon as the code is available on GitHub.
 
 Installation
 =====================
 The TJS extension currently requires two (small) changes in the Geoserver core code of 2.2.4. 
-Download the following jars and place them in geoserver/WEB-INF/lib/:
+To install, you could either add the built libraries or compile the code yourself.
 
-- dd
-- dd
+Download the following ZIP-file with jars and place them in geoserver/WEB-INF/lib/:
 
-Currently, the plugin adds GeoJSON output. 
+Currently, the plugin adds GeoJSON output. After Then add the plugin jars, including 
 
-Then add the plugin jars, including 
+There is a WAR-file available online which includes these changes and the plugin. This needs testing as well.
 
-
-
-There is a WAR-file available online which includes these changes and the plugin: 
-
-
-Alternatively, there is a ZIP-file containing all these jars.
 
 Compilation
 =====================
-Compilation 
+Follow the general build instructions of Geoserver.
+To build the TJS plugin seperately, go to the directory 
 
+src/community/tjs/
 
+and build using the regular command:
+
+mvn clean install -DskipTests
+
+Note: tests will probably fail at the moment because of Postgres connections in some of the tests. Skipping the tests will help for now.
