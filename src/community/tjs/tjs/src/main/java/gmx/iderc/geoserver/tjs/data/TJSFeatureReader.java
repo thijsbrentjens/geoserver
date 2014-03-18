@@ -33,13 +33,16 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     HashMap<Object, Integer> index = new HashMap<Object, Integer>();
 
     private Object lookup(Object keyValue, String fieldName) {
-        int absRow = index.get(keyValue);
         try {
+            int absRow = index.get(keyValue);
             if (rst.absolute(absRow)) {
                 int findex = rst.findColumn(fieldName);
                 return rst.getObject(findex);
             }
         } catch (SQLException ex) {
+            Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
+
+        }  catch (Exception ex) {
             Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
         }
         return null;
@@ -56,6 +59,7 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         this.featureReader = featureReader;
         this.datasetInfo = datasetInfo;
         this.type = type;
+        // TODO: determine if features without joined results should be skipped  / removed or have empty values
         try {
             rst = new CachedRowSetImpl();
             RowSet remote = datasetInfo.getTJSDatasource().getRowSet();
@@ -81,19 +85,30 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     }
 
     public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
+
         SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(type);
         SimpleFeature wfsFeature = featureReader.next();
         featureBuilder.addAll(wfsFeature.getAttributes());
 
         String frameworkKey = datasetInfo.getFramework().getFrameworkKey().getName();
-
         Object keyValue = wfsFeature.getAttribute(frameworkKey);
 
+        // TODO: decide if no result, then return null and skip the result? Or add all result and provide empty values (as done now)
         for (ColumnInfo column : datasetInfo.getColumns()) {
-            featureBuilder.set(column.getName(), lookup(keyValue, column.getName()));
+            Object newValue =  lookup(keyValue, column.getName());
+            if (newValue == null) {
+                newValue = "";
+            }
+            featureBuilder.set(column.getName(), newValue.toString());
         }
-        SimpleFeature ft = featureBuilder.buildFeature(wfsFeature.getID());
-        return ft;
+
+        try {
+             SimpleFeature ft = featureBuilder.buildFeature(wfsFeature.getID());
+            return ft;
+        } catch (Exception ex) {
+            Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
+        }
+        return null;
     }
 
     public boolean hasNext() throws IOException {

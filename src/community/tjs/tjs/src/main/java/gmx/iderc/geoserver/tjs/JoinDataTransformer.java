@@ -4,10 +4,7 @@
  */
 package gmx.iderc.geoserver.tjs;
 
-import gmx.iderc.geoserver.tjs.catalog.DatasetInfo;
-import gmx.iderc.geoserver.tjs.catalog.FrameworkInfo;
-import gmx.iderc.geoserver.tjs.catalog.JoinedMapInfo;
-import gmx.iderc.geoserver.tjs.catalog.TJSCatalog;
+import gmx.iderc.geoserver.tjs.catalog.*;
 import gmx.iderc.geoserver.tjs.catalog.impl.DataStoreInfoImpl;
 import gmx.iderc.geoserver.tjs.catalog.impl.DatasetInfoImpl;
 import gmx.iderc.geoserver.tjs.catalog.impl.JoinedMapInfoImpl;
@@ -27,7 +24,7 @@ import org.geoserver.catalog.impl.NamespaceInfoImpl;
 import org.geoserver.catalog.impl.WorkspaceInfoImpl;
 import org.geoserver.ows.Dispatcher;
 import org.geoserver.ows.Request;
-
+f
 
 import org.geotools.data.*;
 
@@ -51,6 +48,7 @@ import org.geotools.ows.ServiceException;
 import org.geotools.ows.v1_1.OWS;
 
 import org.geotools.referencing.CRS;
+import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 
@@ -74,7 +72,7 @@ import org.opengis.feature.type.Name;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.filter.capability.FunctionName;
 import com.vividsolutions.jts.geom.Geometry;
-// import org.opengis.geometry.Geometry;
+
 // import org.vfny.geoserver.global.GeoserverDataDirectory;
 
 import org.vfny.geoserver.global.GeoserverDataDirectory;
@@ -98,6 +96,8 @@ import java.util.logging.Logger;
  * @author Gabriel Roldan, Axios Engineering
  * @author Chris Holmes
  * @author Justin Deoliveira
+ * TODO: Mention GeoCuba developers as authors
+ * @author Thijs Brentjens, for TJS
  * @version $Id: CapabilitiesTransformer.java 16404 2011-10-06 18:36:00Z jdeolive $
  */
 public abstract class JoinDataTransformer extends TransformerBase {
@@ -183,7 +183,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
 
         class JoinDataTranslator extends TranslatorSupport {
 
-            //            private static final String GML_3_1_1_FORMAT = "text/xml; subtype=gml/3.1.1";
+            // private static final String GML_3_1_1_FORMAT = "text/xml; subtype=gml/3.1.1";
             JoinDataType request;
 
             protected String getBaseURL() {
@@ -246,7 +246,6 @@ public abstract class JoinDataTransformer extends TransformerBase {
 
             public void setUpGetDataURL() throws IOException {
                 URL url = new URL(request.getAttributeData().getGetDataURL());
-                System.out.println("Loading GDAS from: " + url.toString());
                 InputStream is = url.openStream();
                 //is = copy(is);
                 if (is != null) {
@@ -273,17 +272,15 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         start("JoinedOutputs");
 
                         //setUpWMSMechanism(frameworkInfo, gdas.getFramework().getDataset().getDatasetURI());
-                        // Thijs: TODO: enable again, now just for testing
                         setUpWMSMechanism(frameworkInfo, gdas_datasetInfo);
                         
                         // Thijs: TODO: create a WFS mechanism here. For output in other formats. See the setupWMSMechanism as example.
 
                         // Thijs: for now we only have a shape and JSON mechanism
                         setUpFileMechanism(frameworkInfo, gdas_datasetInfo);
-
-
                         end("JoinedOutputs");
 
+                        // for WMS
                         makeJoinedMapByGetDataURL(request.getAttributeData().getGetDataURL(),
                                                          gdas.getFramework().getFrameworkURI(),
                                                          gdas.getFramework().getDataset().getDatasetURI());
@@ -301,7 +298,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     URL url = null;
                     try {
                         url = new URL(mapStyling.getStylingURL());
-                        // System.out.println("Loading Style from: " + url.toString());
+
                         LOGGER.log(Level.INFO, "Loading Style from: " + url.toString());
                         InputStream is = url.openStream();
 
@@ -390,7 +387,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
 
             // Thijs: setup a WFS
             void handleWFSMechanism() {
-                System.out.println("Start WFS mechanism in the JoinData output.. ");
+                //System.out.println("Start WFS mechanism in the JoinData output.. ");
                 start(TJS.Mechanism.getLocalPart());
                 element(TJS.Identifier.getLocalPart(), "WFS");
                 element(TJS.Title.getLocalPart(), "WFS Server v2.0");
@@ -403,6 +400,8 @@ public abstract class JoinDataTransformer extends TransformerBase {
             // This could be rewritten to a shapefile output
             private void setUpWFSMechanism(FrameworkInfo frameworkInfo, DatasetInfo datasetInfo) throws IOException {
                  // TODO: implement, think of stores etc
+
+
             }
 
             private void setUpFileMechanism(FrameworkInfo frameworkInfo, DatasetInfo datasetInfo) throws IOException {
@@ -411,7 +410,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     WorkspaceInfo tempWorkspaceInfo = createTempWorkspace();
                     CatalogBuilder builder = new CatalogBuilder(getGeoserverCatalog());
 
-                    // TODO: get Geoserver temp directory? Or add it to the www dir?
+                    // Add the file to the www dir
                     File datadir = GeoserverDataDirectory.accessor().findDataRoot();
                     // TODO: configurable
                     String wwwPath = "/www/tjsoutput/";
@@ -420,50 +419,54 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     File testFile = new File(tjsOutputDatadir+"dummy.txt");
                     // now create any missing directory
                     testFile.getParentFile().mkdirs() ;
-
                     TJS_1_0_0_DataStore tjs100DataStore = createTJSDataStore(frameworkInfo);
                     TJSStore tempTJSStore = new TJSStore(tjs100DataStore,getGeoserverCatalog());
+
                     // TODO: how is the workspace set? In TJSSStore this method seems to do nothing
                     tempTJSStore.setWorkspace(tempWorkspaceInfo);
 
                     String newFeatureTypeName = datasetInfo.getName();
                     catalog.add(datasetInfo);
 
-                    // TODO: do we need this TJSStore to be added to the GeoserverCatalog?
-                    // or is this done already?
-                    // getGeoserverCatalog().add(tempTJSStore);
-                    // getGeoserverCatalog().add(tempTJSStore);
+                    Iterator it = datasetInfo.getColumns().iterator();
+                    while (it.hasNext()) {
+                        ColumnInfo colInfo = (ColumnInfo) it.next();
+                        }
 
                     //tengo en tempWmsStore el almacen con el servidor de TJS.
                     //Falta publicar la capa del datasetInfo
-                    // TODO: get the featuretypes from the TJS catalog
+
                     List<FeatureTypeInfo> featureTypes = getGeoserverCatalog().getResourcesByStore(tempTJSStore, FeatureTypeInfo.class);
                     FeatureTypeInfo featureTypeInfo = getFeatureTypeInfoIfExists(featureTypes, datasetInfo.getName());
                     // if (featureTypeInfo == null) {
                     builder.setWorkspace(tempWorkspaceInfo);
                     builder.setStore(tempTJSStore);
-                    // TODO: how to deal with the joined data? Create new features in some datastore? Copy data?
+
                     SimpleFeatureType joinedType = ((TJSStore)tempTJSStore).getStore().getSchema(newFeatureTypeName);
 
+                    Iterator attrs =  joinedType.getAttributeDescriptors().iterator();
+                    while (attrs.hasNext()) {
+                        AttributeDescriptor attr = (AttributeDescriptor) attrs.next();
+                    }
+
                     CoordinateReferenceSystem dataCRS =  joinedType.getCoordinateReferenceSystem(); // schema.getCoordinateReferenceSystem();
-                    // System.out.println("dataCRS: " + dataCRS.getName().toString());
 
                     // try to get the target feature type (might have slightly different
                     // name and structure)
 
-                    // TODO: just create a file first, Then maybe later try to create a datastore properly
+                    // just create a file first, Then maybe later try to create a datastore properly for WFS
                     //
-                    // featureTypeInfo.getAttributes();
+
                     try {
                         FeatureReader reader = tjs100DataStore.getFeatureReader(joinedType.getName().getLocalPart());
-                        // FeatureReader reader = fsShape.reader();
                         List<SimpleFeature> features = new ArrayList<SimpleFeature>();
                         SimpleFeatureCollection collection = new ListFeatureCollection(joinedType, features);
-                        System.out.println("Start building collection ");
 
                         while (reader.hasNext()) {
                             try {
                                 SimpleFeature feature = (SimpleFeature)reader.next();
+                                // System.out.println("Feature: " + feature.getAttributes().toString());
+                                Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.FINE, "Feature: " + feature.getID());
                                 features.add(feature);
                             }  catch (Exception ex) {
                                 Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.WARNING, "Error reading one of the features: " + ex.getMessage());
@@ -471,58 +474,9 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         }
                         reader.close();
                         Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.FINE, "Collection built.");
-                        // System.out.println("Number of objects in collection: " + collection.size());
-
-                        // System.out.println("Output TJS datadir: " + tjsOutputDatadir);
-                        String shpFileName = tjsOutputDatadir + newFeatureTypeName+".shp";
-                        File newFile = new File(shpFileName);
-
-                        ShapefileDataStoreFactory dataStoreFactory = new ShapefileDataStoreFactory();
-
-                        Map<String, Serializable> params = new HashMap<String, Serializable>();
-                        params.put("url", newFile.toURI().toURL());
-                        params.put("create spatial index", Boolean.TRUE);
-
-                        ShapefileDataStore newDataStore = (ShapefileDataStore) dataStoreFactory.createNewDataStore(params);
-                        newDataStore.createSchema(joinedType);
-                        Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.FINE, "Shapefile datastore created");
-
-                        // FeatureWriter<SimpleFeatureType, SimpleFeature> writer = null;
-
-                        Transaction transaction = new DefaultTransaction("create");
-
-                        String typeName = newDataStore.getTypeNames()[0];
-                        SimpleFeatureSource featureSource = newDataStore.getFeatureSource(typeName);
-
-                        // SimpleFeatureType SHAPE_TYPE = featureSource.getSchema();
-                        Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.FINE, "Start writing to shapefile");
-                        if (featureSource instanceof SimpleFeatureStore) {
-                            SimpleFeatureStore featureStore = (SimpleFeatureStore) featureSource;
-                            /*
-                             * SimpleFeatureStore has a method to add features from a
-                             * SimpleFeatureCollection object, so we use the ListFeatureCollection
-                             * class to wrap our list of features.
-                             */
-                            featureStore.setTransaction(transaction);
-                            try {
-                                featureStore.addFeatures(collection);
-                                transaction.commit();
-                            } catch (Exception problem) {
-                                problem.printStackTrace();
-                                transaction.rollback();
-                            } finally {
-                                transaction.close();
-                            }
-                        } else {
-                            System.out.println(typeName + " does not support read/write access");
-                            // TODO: do not create the output mechanism
-                        }
-                        Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.FINE, "End creation of shapefile");
-                        // end writing to shapefile
 
                         // Try GeoJSON reprojected
-
-                        // Reproject to EPSG:84
+                        // Reproject to WGS84   / EPSG 4326
                         // List<SimpleFeature> features4326 = new ArrayList<SimpleFeature>();
 
                         /*
@@ -545,16 +499,17 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         // Have added this dependency in pom.xml
                         // TODO: document, include gt-geojson 8.6 in geoserver build
                         // TODO: determine decimals for RD and other projs? If 4326, then more decimals are required
-                        int decimals = 3;
+                        int decimals = 7;
                         // GeometryJSON gjson = new GeometryJSON(decimals);
 
                         GeometryJSON gjson = new GeometryJSON(decimals);
                         FeatureJSON fjson = new FeatureJSON(gjson);
 
                         StringWriter writer = new StringWriter();
-                        // TODO: write CRS information
+                        // TODO: write CRS information?
                         // fjson.writeCRS(dataCRS, writer);
                         fjson.setEncodeFeatureCollectionCRS(true);
+
                         // fjson.setEncodeFeatureCollectionBounds(true);
 
                         // looping over the features
@@ -575,15 +530,15 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         jsonFileWriter.close();
                         writer.close();
 
-
                     } catch (Exception ex) {
                         Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.SEVERE, "Error writing features to a file: " + ex.getMessage());
                         throw ex;
                     }
 
+                    start("Output");
                     // handleShapeMechanism();
                     handleJSONMechanism();
-                    start("Output");
+
                     start("Resource");
                     // TODO: determine outputdir better ?
                     // getBaseURL().replace("/tjs/","/");
@@ -920,10 +875,10 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     FileOutputStream fos = new FileOutputStream(file);
                     StreamUtils.copy(source, fos);
                     fos.close();
-                    System.out.println("file copied in: " + file.toString());
+                    // System.out.println("file copied in: " + file.toString());
                     return new FileInputStream(file);
                 } catch (IOException ex) {
-                    System.out.println("Problem coping file: " + ex.getMessage());
+                    // System.out.println("Problem coping file: " + ex.getMessage());
                 }
                 return null;
             }

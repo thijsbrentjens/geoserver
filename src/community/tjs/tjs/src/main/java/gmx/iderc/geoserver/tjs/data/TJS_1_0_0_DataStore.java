@@ -75,9 +75,24 @@ public class TJS_1_0_0_DataStore extends AbstractDataStore {
         }
         DatasetInfo datasetInfo = catalog.getDatasetByFramework(frameworkInfo.getId(), typeName);
 
-        // Fixed that?
+        // Fixed the column?
         for (ColumnInfo column : datasetInfo.getColumns()) {
-            featureTypeBuilder.add(column.getName(), column.getSQLClassBinding());
+            // add the length to the attribute value
+            // featureTypeBuilder.length(column.getLength());
+            System.out.println(column.getName()+ ", column.getSQLClassBinding(): " + column.getSQLClassBinding().toString());
+            // class attrClass = ;
+            Class attrClass = String.class;
+            // TODO: this class mapping is a workaround to avoid cutting off Strings (beacuase the SQL Class Binding seems to be java.lang.Character)
+            // Find out where type mapping is done.
+            // How to check the class and use that for the featureTypeBuilder??
+            if (column.getSQLClassBinding().equals( (Class)java.lang.Character.class ) ) {
+                attrClass = String.class;
+            }   else {
+                // TODO: integers, doubles, etc?
+                // assume this is correct now..
+                attrClass = column.getSQLClassBinding();
+            }
+            featureTypeBuilder.add(column.getName(), attrClass);
         }
         // TODO: deal with the namespace
         featureTypeBuilder.setNamespaceURI("");
