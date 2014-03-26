@@ -42,7 +42,7 @@ Related projects
 ===========
 For demonstraton and test purposes a basic tool is developed. This tool allows users to upload a CSV-file and join that to a spatial framework (spatial dataset)
 
-TODO: reference to the tool as soon as the code is available on GitHub.
+See https://github.com/ojajoh/tjs-demonstrator for the demonstrator
 
 Installation
 =====================
