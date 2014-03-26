@@ -4,11 +4,14 @@ import com.sun.rowset.CachedRowSetImpl;
 import gmx.iderc.geoserver.tjs.catalog.ColumnInfo;
 import gmx.iderc.geoserver.tjs.catalog.DatasetInfo;
 import org.apache.log4j.Logger;
+import org.geotools.data.DataStore;
 import org.geotools.data.FeatureReader;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.Name;
+
+import org.geotools.data.store.ContentState;
 
 import javax.sql.RowSet;
 import java.io.IOException;
@@ -35,13 +38,16 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     private Object lookup(Object keyValue, String fieldName) {
         try {
             int absRow = index.get(keyValue);
-            if (rst.absolute(absRow)) {
-                int findex = rst.findColumn(fieldName);
-                return rst.getObject(findex);
+            if (absRow >= 0) {
+                if (rst.absolute(absRow)) {
+                    int findex = rst.findColumn(fieldName);
+                    if (findex >= 0) {
+                        return rst.getObject(findex);
+                    }
+                }
             }
         } catch (SQLException ex) {
             Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
-
         }  catch (Exception ex) {
             Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
         }
@@ -53,6 +59,13 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         while (rst.next()) {
             index.put(rst.getObject(keyIndex), rst.getRow());
         }
+    }
+
+    public TJSFeatureReader(ContentState contentState) {
+        // TODO Thijs: check for nulls / not available parts  ?
+        SimpleFeatureType ft =  contentState.getFeatureType();
+
+        new TJSFeatureReader(ft, this.featureReader, this.datasetInfo)  ;
     }
 
     public TJSFeatureReader(SimpleFeatureType type, FeatureReader<SimpleFeatureType, SimpleFeature> featureReader, DatasetInfo datasetInfo) {
@@ -95,7 +108,15 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
 
         // TODO: decide if no result, then return null and skip the result? Or add all result and provide empty values (as done now)
         for (ColumnInfo column : datasetInfo.getColumns()) {
-            Object newValue =  lookup(keyValue, column.getName());
+            Object newValue = null;
+            try {
+                if (keyValue!=null) {
+                    newValue = lookup(keyValue, column.getName());
+                }
+            } catch (Exception ex) {
+                System.out.println("Exception for : " + keyValue + " ------- " + ex.getMessage());
+                newValue = "";
+            }
             if (newValue == null) {
                 newValue = "";
             }
@@ -103,7 +124,7 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         }
 
         try {
-             SimpleFeature ft = featureBuilder.buildFeature(wfsFeature.getID());
+            SimpleFeature ft = featureBuilder.buildFeature(wfsFeature.getID());
             return ft;
         } catch (Exception ex) {
             Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());

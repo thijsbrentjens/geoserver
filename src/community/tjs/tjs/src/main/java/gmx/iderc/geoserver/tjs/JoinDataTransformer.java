@@ -20,11 +20,11 @@ import net.opengis.tjs10.*;
 import org.apache.log4j.lf5.util.StreamUtils;
 import org.apache.wicket.util.file.Files;
 import org.geoserver.catalog.*;
+import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.catalog.impl.NamespaceInfoImpl;
 import org.geoserver.catalog.impl.WorkspaceInfoImpl;
 import org.geoserver.ows.Dispatcher;
 import org.geoserver.ows.Request;
-f
 
 import org.geotools.data.*;
 
@@ -271,13 +271,12 @@ public abstract class JoinDataTransformer extends TransformerBase {
 
                         start("JoinedOutputs");
 
-                        //setUpWMSMechanism(frameworkInfo, gdas.getFramework().getDataset().getDatasetURI());
-                        setUpWMSMechanism(frameworkInfo, gdas_datasetInfo);
+                        // setUpWMSMechanism(frameworkInfo, gdas.getFramework().getDataset().getDatasetURI());
+                        // setUpWMSMechanism(frameworkInfo, gdas_datasetInfo);
                         
-                        // Thijs: TODO: create a WFS mechanism here. For output in other formats. See the setupWMSMechanism as example.
+                        // Thijs: TODO: create a WFS mechanism here. For output in all kinds of formats.
+                        setUpWFSandWMSMechanism(frameworkInfo, gdas_datasetInfo);
 
-                        // Thijs: for now we only have a shape and JSON mechanism
-                        setUpFileMechanism(frameworkInfo, gdas_datasetInfo);
                         end("JoinedOutputs");
 
                         // for WMS
@@ -328,9 +327,9 @@ public abstract class JoinDataTransformer extends TransformerBase {
 
                         datasetInfo.setDefaultStyle(styleName);
                     } catch (MalformedURLException e) {
-                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        e.printStackTrace();
                     } catch (IOException e) {
-                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        e.printStackTrace();
                     }
                 }
             }
@@ -367,15 +366,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                 end(TJS.Mechanism.getLocalPart());
             }
 
-            void handleJSONMechanism() {
-                start(TJS.Mechanism.getLocalPart());
-                element(TJS.Identifier.getLocalPart(), "GeoJSON");
-                element(TJS.Title.getLocalPart(), "GeoJSON file");
-                element(TJS.Abstract.getLocalPart(), "GeoJSON file in original CRS with spatial dataset");
-                element("Reference", "GeoJSON spec");
-                end(TJS.Mechanism.getLocalPart());
-            }
-
+            // setup WMS output
             void handleWMSMechanism() {
                 start(TJS.Mechanism.getLocalPart());
                 element(TJS.Identifier.getLocalPart(), "WMS");
@@ -385,174 +376,135 @@ public abstract class JoinDataTransformer extends TransformerBase {
                 end(TJS.Mechanism.getLocalPart());
             }
 
-            // Thijs: setup a WFS
+            // Thijs: setup WFS output
             void handleWFSMechanism() {
-                //System.out.println("Start WFS mechanism in the JoinData output.. ");
                 start(TJS.Mechanism.getLocalPart());
                 element(TJS.Identifier.getLocalPart(), "WFS");
                 element(TJS.Title.getLocalPart(), "WFS Server v2.0");
-                element(TJS.Abstract.getLocalPart(), "TODO");
+                element(TJS.Abstract.getLocalPart(), "The Web Feature Service (WFS) represents a change in the way geographic information is created, modified and exchanged on the Internet. Rather than sharing geographic information at the file level using File Transfer Protocol (FTP), for example, the WFS offers direct fine-grained access to geographic information at the feature and feature property level. Web feature services allow clients to only retrieve or modify the data they are seeking, rather than retrieving a file that contains the data they are seeking and possibly much more. That data can then be used for a wide variety of purposes, including purposes other than their producers' intended ones.");
                 element("Reference", "http://schemas.opengis.net/wfs/2.0/");
                 end(TJS.Mechanism.getLocalPart());
             }
 
             // Thijs: WORK IN PROGRESS
-            // This could be rewritten to a shapefile output
-            private void setUpWFSMechanism(FrameworkInfo frameworkInfo, DatasetInfo datasetInfo) throws IOException {
-                 // TODO: implement, think of stores etc
+            // Need to refactor code, to extract the datastore and featuretype creation code
+            // Now needed to first SetupWWFSMechanism
 
-
-            }
-
-            private void setUpFileMechanism(FrameworkInfo frameworkInfo, DatasetInfo datasetInfo) throws IOException {
-
+            private void setUpWFSandWMSMechanism(FrameworkInfo frameworkInfo, DatasetInfo datasetInfo) throws IOException {
                 try {
+
                     WorkspaceInfo tempWorkspaceInfo = createTempWorkspace();
                     CatalogBuilder builder = new CatalogBuilder(getGeoserverCatalog());
 
-                    // Add the file to the www dir
-                    File datadir = GeoserverDataDirectory.accessor().findDataRoot();
-                    // TODO: configurable
-                    String wwwPath = "/www/tjsoutput/";
-                    String tjsOutputDatadir = datadir.getPath() + wwwPath;
-
-                    File testFile = new File(tjsOutputDatadir+"dummy.txt");
-                    // now create any missing directory
-                    testFile.getParentFile().mkdirs() ;
                     TJS_1_0_0_DataStore tjs100DataStore = createTJSDataStore(frameworkInfo);
                     TJSStore tempTJSStore = new TJSStore(tjs100DataStore,getGeoserverCatalog());
-
-                    // TODO: how is the workspace set? In TJSSStore this method seems to do nothing
                     tempTJSStore.setWorkspace(tempWorkspaceInfo);
 
-                    String newFeatureTypeName = datasetInfo.getName();
+                    // TODO: what if the datasetInfo is already there?
                     catalog.add(datasetInfo);
 
-                    Iterator it = datasetInfo.getColumns().iterator();
-                    while (it.hasNext()) {
-                        ColumnInfo colInfo = (ColumnInfo) it.next();
+                    // org.geoserver.catalog.DataStoreInfo dsInfo = (org.geoserver.catalog.DataStoreInfo)tempTJSStore;
+
+                    // if the temp datastore does not exist, create a new one
+                    Catalog gsCatalog = getGeoserverCatalog();
+                    List<DataStoreInfo> tjsTempDataStores = gsCatalog.getDataStoresByWorkspace(tempWorkspaceInfo); // TJSExtension.TJS_TEMP_WORKSPACE
+
+                    String tempDataStoreName = tempTJSStore.getName();
+                    DataStoreInfo dsInfoNew = getTempDatastoreIfExists(tjsTempDataStores, tempDataStoreName);
+
+                    if (dsInfoNew == null) {
+                        builder.setWorkspace(tempWorkspaceInfo);
+                        dsInfoNew = builder.buildDataStore(TJSExtension.TJS_TEMP_WORKSPACE) ;
+                        dsInfoNew.setName(tempDataStoreName);
+                        try {
+                            // TODO: deal with existing datastores
+                            gsCatalog.add((DataStoreInfo)tempTJSStore);
+                        } catch (Exception ex) {
+                            // TODO: logger
+                            System.out.println(ex.getMessage());
                         }
+                    }
 
-                    //tengo en tempWmsStore el almacen con el servidor de TJS.
-                    //Falta publicar la capa del datasetInfo
+                    // Create a full Geoserver datastore and layer, it e featuretype is not available yet
+                    // TODO: decied what to do if the JoinData equest is processed again, but then with another GDAS data content
+                    // Should there be a new layer or just an updaye of the cache
+                    // Should it be able to clear the cache, using a parameter maybe?
+                    String newFeatureTypeName = datasetInfo.getName();
 
-                    List<FeatureTypeInfo> featureTypes = getGeoserverCatalog().getResourcesByStore(tempTJSStore, FeatureTypeInfo.class);
+                    List<FeatureTypeInfo> featureTypes = gsCatalog.getResourcesByStore(dsInfoNew, FeatureTypeInfo.class);
                     FeatureTypeInfo featureTypeInfo = getFeatureTypeInfoIfExists(featureTypes, datasetInfo.getName());
-                    // if (featureTypeInfo == null) {
-                    builder.setWorkspace(tempWorkspaceInfo);
-                    builder.setStore(tempTJSStore);
+                    if (featureTypeInfo == null) {
 
-                    SimpleFeatureType joinedType = ((TJSStore)tempTJSStore).getStore().getSchema(newFeatureTypeName);
+                        builder.setStore(tempTJSStore);
 
-                    Iterator attrs =  joinedType.getAttributeDescriptors().iterator();
-                    while (attrs.hasNext()) {
-                        AttributeDescriptor attr = (AttributeDescriptor) attrs.next();
+                        FeatureSource featureSource = (FeatureSource)tjs100DataStore.getFeatureSource(newFeatureTypeName);
+                        featureTypeInfo = builder.buildFeatureType(featureSource) ;
+
+                        ReferencedEnvelope bounds = featureSource.getBounds();
+
+                        featureTypeInfo.setNativeBoundingBox(bounds);
+                        featureTypeInfo.setLatLonBoundingBox(bounds.transform(CRS.decode("EPSG:4326"), true)); // true: lenient?
+
+                        gsCatalog.add(featureTypeInfo);
+
+                        builder.setWorkspace(tempWorkspaceInfo);
+                        builder.setStore(tempTJSStore);
+
+                        // TODO: Needed?
+                        builder.setupBounds(featureTypeInfo, featureSource);
+
+                        LayerInfo layer = builder.buildLayer(featureTypeInfo);
+                        gsCatalog.add(layer);
                     }
 
-                    CoordinateReferenceSystem dataCRS =  joinedType.getCoordinateReferenceSystem(); // schema.getCoordinateReferenceSystem();
-
-                    // try to get the target feature type (might have slightly different
-                    // name and structure)
-
-                    // just create a file first, Then maybe later try to create a datastore properly for WFS
-                    //
-
-                    try {
-                        FeatureReader reader = tjs100DataStore.getFeatureReader(joinedType.getName().getLocalPart());
-                        List<SimpleFeature> features = new ArrayList<SimpleFeature>();
-                        SimpleFeatureCollection collection = new ListFeatureCollection(joinedType, features);
-
-                        while (reader.hasNext()) {
-                            try {
-                                SimpleFeature feature = (SimpleFeature)reader.next();
-                                // System.out.println("Feature: " + feature.getAttributes().toString());
-                                Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.FINE, "Feature: " + feature.getID());
-                                features.add(feature);
-                            }  catch (Exception ex) {
-                                Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.WARNING, "Error reading one of the features: " + ex.getMessage());
-                            }
-                        }
-                        reader.close();
-                        Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.FINE, "Collection built.");
-
-                        // Try GeoJSON reprojected
-                        // Reproject to WGS84   / EPSG 4326
-                        // List<SimpleFeature> features4326 = new ArrayList<SimpleFeature>();
-
-                        /*
-                        CoordinateReferenceSystem worldCRS = CRS.decode("EPSG:4326");
-                        boolean lenient = true; // allow for some error due to different datums
-                        MathTransform transform = CRS.findMathTransform(dataCRS, worldCRS, lenient);
-
-                        while (collection.features().hasNext()) {
-                            SimpleFeature sf4326 = ((SimpleFeature)collection.features().next());
-                            Geometry geometry = (Geometry) sf4326.getDefaultGeometry();
-                            Geometry geometry2 = JTS.transform(geometry, transform);
-                            sf4326.setDefaultGeometry(geometry2);
-                            features4326.add(sf4326);
-                        }
-                        SimpleFeatureCollection collection4326 = new ListFeatureCollection(joinedType, features4326);
-                        */
-
-                        Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.FINE, "Start JSON output");
-                        // TODO: Document, this means an extra dependency from gt-geojson, which is currently not available in geoserver
-                        // Have added this dependency in pom.xml
-                        // TODO: document, include gt-geojson 8.6 in geoserver build
-                        // TODO: determine decimals for RD and other projs? If 4326, then more decimals are required
-                        int decimals = 7;
-                        // GeometryJSON gjson = new GeometryJSON(decimals);
-
-                        GeometryJSON gjson = new GeometryJSON(decimals);
-                        FeatureJSON fjson = new FeatureJSON(gjson);
-
-                        StringWriter writer = new StringWriter();
-                        // TODO: write CRS information?
-                        // fjson.writeCRS(dataCRS, writer);
-                        fjson.setEncodeFeatureCollectionCRS(true);
-
-                        // fjson.setEncodeFeatureCollectionBounds(true);
-
-                        // looping over the features
-                        /* */
-                        /* while (collection.features().hasNext() ){
-                              fjson.writeFeature((SimpleFeature)(collection.features().next()), writer);
-                              // writer.write("\\n");
-                        }
-                        */
-                        // shorter notation: all on one line
-                        fjson.writeFeatureCollection(collection, writer);
-
-                        String json = writer.toString();
-
-                        File jsonFile = new File(tjsOutputDatadir+newFeatureTypeName+".json");
-                        FileWriter jsonFileWriter = new FileWriter(jsonFile);
-                        jsonFileWriter.write(json);
-                        jsonFileWriter.close();
-                        writer.close();
-
-                    } catch (Exception ex) {
-                        Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.SEVERE, "Error writing features to a file: " + ex.getMessage());
-                        throw ex;
-                    }
-
+                    // output for WFS
                     start("Output");
-                    // handleShapeMechanism();
-                    handleJSONMechanism();
+                    handleWFSMechanism();
 
                     start("Resource");
-                    // TODO: determine outputdir better ?
-                    // getBaseURL().replace("/tjs/","/");
-                    String outputLocation = getServerURL().concat(wwwPath);
+                    String tempWFSUrl = getTempWFSUrl(tempWorkspaceInfo);
+                    element("URL", tempWFSUrl + "?request=GetCapabilities&service=WFS");
 
-                    element("URL", outputLocation + newFeatureTypeName + ".json");
+                    AttributesImpl attributes = attributes(new String[]{"name", "domainName"});
+                    element("Parameter", tempWFSUrl, attributes);
+
+                    // TODO: thijs, is this correct TJS output?
+                    attributes = attributes(new String[]{"name", "typeName"});
+                    element("Parameter", datasetInfo.getName(), attributes);
+
+                    end("Resource");
+                    end("Output");
+
+
+                    // output for WMS
+                    start("Output");
+
+                    handleWMSMechanism();
+
+                    start("Resource");
+
+                    String getTempWMSUrl = getTempWMSUrl(tempWorkspaceInfo);
+                    element("URL", getTempWMSUrl + "?request=GetCapabilities&service=WMS");
+
+                    attributes = attributes(new String[]{"name", "domainName"});
+                    element("Parameter", getTempWMSUrl, attributes);
+
+                    // for WMS this shall be layers
+                    attributes = attributes(new String[]{"name", "layers"});
+                    element("Parameter", datasetInfo.getName(), attributes);
 
                     end("Resource");
                     end("Output");
 
                 } catch (Exception ex) {
-                    Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.SEVERE, "Something failed in the file output: " + ex.getMessage());
+                    // TODO:proper logging
+                    System.out.println("Error in creating WFS and WMS mechanims");
+                    System.out.println(ex.getMessage());
+                    ex.printStackTrace();
                 }
+
             }
+
 
             protected void clone(WMSStoreInfo source, WMSStoreInfo target) {
                 target.setDescription(source.getDescription());
@@ -734,7 +686,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         wms = getBaseURL().concat("/"+TJSExtension.TJS_TEMP_WORKSPACE + "/wms");
                     }
                 }
-                return wms + "?request=GetCapabilities&service=WMS";
+                return wms;
             }
 
             // Thijs: TODO: refactor for WFS and WMS
@@ -751,8 +703,9 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         wfs = getBaseURL().concat("/"+TJSExtension.TJS_TEMP_WORKSPACE + "/wfs");
                     }
                 }
-                return wfs + "?request=GetCapabilities&service=WFS";
+                return wfs;
             }
+
 
             private WebMapServer createWebMapServer(FrameworkInfo frameworkInfo) {
                 try {
@@ -795,49 +748,19 @@ public abstract class JoinDataTransformer extends TransformerBase {
                 }
                 return null;
             }
-
+            // TODO: move to factory?
             private TJS_1_0_0_DataStore createTJSDataStore(FrameworkInfo frameworkInfo) {
                 try {
                     Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.FINE,"Creating TJS Data store for WFS");
                     // LayerInfo layer = frameworkInfo.getAssociatedWMS();
                     FeatureTypeInfo featureTypeInfo = frameworkInfo.getFeatureType();
-                    CatalogBuilder builder = new CatalogBuilder(getGeoserverCatalog());
+                    // CatalogBuilder builder = new CatalogBuilder(getGeoserverCatalog());
 
                     // we have a WFS Datastore already  for the featuretype
                     // assume it is a wfsDataStore?
                     DataStore featureDataStore = (DataStore) featureTypeInfo.getStore().getDataStore(null);
                     Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.FINE, "Datastore: " + featureDataStore.toString());
 
-                    //esto me paece que es una fuente de error!, Alvaro Javier Fuentes Suarez
-                    //String prefixedLayerName = layer.getResource().getPrefixedName();
-                    //se hace así, Alvaro Javier Fuentes Suarez
-                   /* String layerName = layer.getName();
-                    String prefix = layer.getResource().getNamespace().getPrefix();
-
-                    URL wmsServerUrl = new URL(getLocalWMSUrl(prefix));
-                    //WebMapServer wms = null;
-                    //Si no existe el store en el catalogo lo creo
-                    WMSStoreInfo wmsStoreInfo = getGeoserverCatalog().getStoreByName(prefix, WMSStoreInfo.class);
-                    if (wmsStoreInfo == null) {
-                        wmsStoreInfo = builder.buildWMSStore(prefix);
-                        wmsStoreInfo.setCapabilitiesURL(wmsServerUrl.toString());
-                        wmsStoreInfo.setWorkspace(createTempWorkspace());
-                        getGeoserverCatalog().add(wmsStoreInfo);
-                    }
-                    builder.setStore(wmsStoreInfo);
-                    //no usar el prefixed!, Alvaro Javier Fuentes Suarez
-                    //WMSLayerInfo wmsLayerInfo = builder.buildWMSLayer(prefixedLayerName);
-                    //use reste!, Alvaro Javier Fuentes Suarez
-                    WMSLayerInfo wmsLayerInfo = builder.buildWMSLayer(layerName);
-                    WMSLayerInfo exists = getGeoserverCatalog().getResourceByStore(wmsStoreInfo, frameworkInfo.getAssociatedWMS().getName(), WMSLayerInfo.class);
-                    if (exists != null) {
-                        builder.updateWMSLayer(exists, wmsLayerInfo);
-                    } else {
-                        LayerInfo layerInfo = builder.buildLayer(wmsLayerInfo);
-                        getGeoserverCatalog().add(wmsLayerInfo);
-                        getGeoserverCatalog().add(layerInfo);
-                    }
-                     */
                     // should be a TJS Catalog here...
                     TJSCatalog tjsCatalog = TJSExtension.getTJSCatalog();
                     Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.FINE, "TJS Catalog: " + tjsCatalog.toString());
@@ -863,6 +786,17 @@ public abstract class JoinDataTransformer extends TransformerBase {
                 for (FeatureTypeInfo featureType : featureTypes) {
                     if (featureType.getName().equalsIgnoreCase(typeName)) {
                         return featureType;
+                    }
+                }
+                return null;
+            }
+
+            private DataStoreInfo getTempDatastoreIfExists(List<DataStoreInfo> dataStores, String storeName) {
+                if (dataStores!=null ) {
+                    for (DataStoreInfo dataStoreInfo : dataStores) {
+                        if (dataStoreInfo.getName().equalsIgnoreCase(storeName)) {
+                            return dataStoreInfo;
+                        }
                     }
                 }
                 return null;
@@ -895,7 +829,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                 try {
                     CatalogBuilder builder = new CatalogBuilder(getGeoserverCatalog());
 
-                    String tempWms = getTempWMSUrl(tempWorkspaceInfo);
+                    String tempWms = getTempWMSUrl(tempWorkspaceInfo) + "?request=GetCapabilities&service=WMS";
                     URL tempWmsUrl = new URL(tempWms);
                     DatasetInfo datasetInfo = catalog.getDatasetByUri(datasetURI);
                     WMSStoreInfo tempWmsStore = getGeoserverCatalog().getStoreByName(TJSExtension.TJS_TEMP_WORKSPACE, WMSStoreInfo.class);
@@ -963,7 +897,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                 try {
                     CatalogBuilder builder = new CatalogBuilder(getGeoserverCatalog());
 
-                    String tempWms = getTempWMSUrl(tempWorkspaceInfo);
+                    String tempWms = getTempWMSUrl(tempWorkspaceInfo) + "?request=GetCapabilities&service=WMS";
                     URL tempWmsUrl = new URL(tempWms);
                     WMSStoreInfo tempWmsStore = getGeoserverCatalog().getStoreByName(TJSExtension.TJS_TEMP_WORKSPACE, WMSStoreInfo.class);
                     if (tempWmsStore == null) {

@@ -135,9 +135,9 @@ public class HSQLDB_GDAS_Cache {
             Class.forName("org.hsqldb.jdbcDriver");
 
             String tmpDir = System.getProperty("java.io.tmpdir");
-            // THijs: fix the dir?
-            // tmpDir = tmpDir.concat("allgdas").concat("/");
-            tmpDir = tmpDir.concat("/").concat("allgdas").concat("/");
+
+            // Thijs: fix the dir by using proper separator
+            tmpDir = tmpDir.concat(File.separator).concat("allgdas").concat(File.separator);
             allgdas = new File(tmpDir);
             String url = "jdbc:hsqldb:file:/" + allgdas.toString();
             url = url.replace(File.separatorChar, '/');

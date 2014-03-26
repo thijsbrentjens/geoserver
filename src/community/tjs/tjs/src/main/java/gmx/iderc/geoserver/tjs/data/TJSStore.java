@@ -3,6 +3,7 @@ package gmx.iderc.geoserver.tjs.data;
 import gmx.iderc.geoserver.tjs.TJSExtension;
 import gmx.iderc.geoserver.tjs.catalog.impl.TJSCatalogFactoryImpl;
 import org.geoserver.catalog.*;
+import org.geoserver.catalog.impl.StoreInfoImpl;
 import org.geotools.data.DataAccess;
 import org.opengis.feature.Feature;
 import org.opengis.feature.type.FeatureType;
@@ -10,6 +11,7 @@ import org.opengis.util.ProgressListener;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -19,16 +21,18 @@ import java.util.Map;
  * Time: 9:34 PM
  * To change this template use File | Settings | File Templates.
  */
-public class TJSStore implements DataStoreInfo {
+public class TJSStore extends StoreInfoImpl implements DataStoreInfo, Serializable {
 
-    TJS_1_0_0_DataStore store;
-    Catalog catalog;
+    transient TJS_1_0_0_DataStore store;
+    transient Catalog catalog;
     String id;
+    String type;
 
     public TJSStore(TJS_1_0_0_DataStore store, Catalog catalog) {
         this.store = store;
         this.catalog = catalog;
         this.id = TJSCatalogFactoryImpl.getIdForObject(this);
+        this.type = this.getType();
     }
 
     public DataAccess<? extends FeatureType, ? extends Feature> getDataStore(ProgressListener listener) throws IOException {
@@ -57,18 +61,21 @@ public class TJSStore implements DataStoreInfo {
 
     public void setDescription(String description) {
         //To change body of implemented methods use File | Settings | File Templates.
+        // TODO: how to deal with this, since it is not about the framework?
+        store.getFrameworkInfo().setDescription(description);
     }
 
     public String getType() {
-        return "TJS Store";
+        // TODO: make this a configurable name, constant
+        return "TJSJoinedData";
     }
 
     public void setType(String type) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        // TODO: implement this?
     }
 
     public MetadataMap getMetadata() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;
     }
 
     public boolean isEnabled() {
@@ -77,6 +84,7 @@ public class TJSStore implements DataStoreInfo {
 
     public void setEnabled(boolean enabled) {
         //To change body of implemented methods use File | Settings | File Templates.
+        store.getFrameworkInfo().setEnabled(enabled);
     }
 
     public WorkspaceInfo getWorkspace() {
@@ -88,7 +96,12 @@ public class TJSStore implements DataStoreInfo {
     }
 
     public Map<String, Serializable> getConnectionParameters() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        // TODO: workaround to provide some params?
+        Map<String, Serializable> params = new HashMap<String, Serializable>();
+
+        params.put("FrameworkId", store.getFrameworkInfo().getId());
+        // params.put("FrameworkId", store.getFrameworkInfo().getId());
+        return params;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public Throwable getError() {
