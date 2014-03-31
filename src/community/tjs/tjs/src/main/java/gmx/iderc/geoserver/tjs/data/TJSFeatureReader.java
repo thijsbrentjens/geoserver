@@ -114,7 +114,6 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
                     newValue = lookup(keyValue, column.getName());
                 }
             } catch (Exception ex) {
-                System.out.println("Exception for : " + keyValue + " ------- " + ex.getMessage());
                 newValue = "";
             }
             if (newValue == null) {

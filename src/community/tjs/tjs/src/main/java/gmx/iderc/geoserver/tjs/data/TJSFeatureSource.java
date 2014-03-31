@@ -84,25 +84,47 @@ public class TJSFeatureSource extends AbstractFeatureSource {           // not C
     }
 
     public final ReferencedEnvelope getBounds ()  throws IOException {
-        CoordinateReferenceSystem crs = getSchema().getCoordinateReferenceSystem();
-        // TODO: the same as the bounds from the framework? Or calculate it like this?
-        if (crs ==null)  {
-            crs = store.featureDataStore.getSchema(store.getFrameworkInfo().getFeatureType().getNativeName()).getCoordinateReferenceSystem();
-        }
-        ReferencedEnvelope bounds  = new ReferencedEnvelope( crs );
-        FeatureReader<SimpleFeatureType, SimpleFeature> featureReader = store.getFeatureReader(this.typeName);
-        try {
-            while( featureReader.hasNext() ){
-                SimpleFeature feature = featureReader.next();
-                bounds.include( feature.getBounds() );
+        CoordinateReferenceSystem crs = getCRS();
+        if (crs != null ) {
+            ReferencedEnvelope bounds  = new ReferencedEnvelope( crs );
+            FeatureReader<SimpleFeatureType, SimpleFeature> featureReader = store.getFeatureReader(this.typeName);
+            try {
+                while( featureReader.hasNext() ){
+                    SimpleFeature feature = featureReader.next();
+                    bounds.include( feature.getBounds() );
+                }
             }
+            finally {
+                featureReader.close();
+            }
+            return bounds;
+        } else {
+            return null;
         }
-        finally {
-            featureReader.close();
-        }
-        return bounds;
     }
 
+
+    public final CoordinateReferenceSystem getCRS() {
+        CoordinateReferenceSystem crs = getSchema().getCoordinateReferenceSystem();
+        // TODO: the same as the declared crs from the framework?
+        if (crs == null)  {
+            // first try the declared CRS, if that is not available, try to use the native CRS
+            try {
+                crs = store.getFrameworkInfo().getFeatureType().getCRS();
+                if (crs == null) {
+                    crs = store.featureDataStore.getSchema(store.getFrameworkInfo().getFeatureType().getNativeName()).getCoordinateReferenceSystem();
+                }
+             }  catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return crs;
+    }
+
+    // Return the SRS string as declared in the featuretype of the framework
+    public final String getSRS() {
+        return store.getFrameworkInfo().getFeatureType().getSRS();
+    }
 
     protected int getCountInternal(Query query) throws IOException {
         SimpleFeatureCollection sfc = this.getFeatures(query);

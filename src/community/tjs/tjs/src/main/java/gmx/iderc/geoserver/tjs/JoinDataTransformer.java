@@ -9,6 +9,7 @@ import gmx.iderc.geoserver.tjs.catalog.impl.DataStoreInfoImpl;
 import gmx.iderc.geoserver.tjs.catalog.impl.DatasetInfoImpl;
 import gmx.iderc.geoserver.tjs.catalog.impl.JoinedMapInfoImpl;
 import gmx.iderc.geoserver.tjs.catalog.impl.TJSCatalogImpl;
+import gmx.iderc.geoserver.tjs.data.TJSFeatureSource;
 import gmx.iderc.geoserver.tjs.data.TJS_1_0_0_DataStore;
 import gmx.iderc.geoserver.tjs.data.TJS_WebMapServer;
 import gmx.iderc.geoserver.tjs.data.TJSStore;
@@ -440,11 +441,17 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         FeatureSource featureSource = (FeatureSource)tjs100DataStore.getFeatureSource(newFeatureTypeName);
                         featureTypeInfo = builder.buildFeatureType(featureSource) ;
 
+                        CoordinateReferenceSystem crs = ((TJSFeatureSource)featureSource).getCRS();
+
                         ReferencedEnvelope bounds = featureSource.getBounds();
-
                         featureTypeInfo.setNativeBoundingBox(bounds);
-                        featureTypeInfo.setLatLonBoundingBox(bounds.transform(CRS.decode("EPSG:4326"), true)); // true: lenient?
-
+                        // TODO: what if we don't have a CRS / crs==null. What to do? Stop adding the featuretype?
+                        featureTypeInfo.setNativeCRS(crs);
+                        if (crs!=null) {
+                            featureTypeInfo.setLatLonBoundingBox(bounds.transform(CRS.decode("EPSG:4326"), true)); // true: lenient?
+                        }
+                        // explicitly add the SRS code
+                        featureTypeInfo.setSRS(((TJSFeatureSource) featureSource).getSRS());
                         gsCatalog.add(featureTypeInfo);
 
                         builder.setWorkspace(tempWorkspaceInfo);
@@ -457,24 +464,6 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         gsCatalog.add(layer);
                     }
 
-                    // output for WFS
-                    start("Output");
-                    handleWFSMechanism();
-
-                    start("Resource");
-                    String tempWFSUrl = getTempWFSUrl(tempWorkspaceInfo);
-                    element("URL", tempWFSUrl + "?request=GetCapabilities&service=WFS");
-
-                    AttributesImpl attributes = attributes(new String[]{"name", "domainName"});
-                    element("Parameter", tempWFSUrl, attributes);
-
-                    // TODO: thijs, is this correct TJS output?
-                    attributes = attributes(new String[]{"name", "typeName"});
-                    element("Parameter", datasetInfo.getName(), attributes);
-
-                    end("Resource");
-                    end("Output");
-
 
                     // output for WMS
                     start("Output");
@@ -486,7 +475,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     String getTempWMSUrl = getTempWMSUrl(tempWorkspaceInfo);
                     element("URL", getTempWMSUrl + "?request=GetCapabilities&service=WMS");
 
-                    attributes = attributes(new String[]{"name", "domainName"});
+                    AttributesImpl attributes = attributes(new String[]{"name", "domainName"});
                     element("Parameter", getTempWMSUrl, attributes);
 
                     // for WMS this shall be layers
@@ -496,10 +485,28 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     end("Resource");
                     end("Output");
 
+                    // TODO: thijs, is this correct TJS output?
+                    // output for WFS
+                    start("Output");
+                    handleWFSMechanism();
+
+                    start("Resource");
+                    String tempWFSUrl = getTempWFSUrl(tempWorkspaceInfo);
+                    element("URL", tempWFSUrl + "?request=GetCapabilities&service=WFS");
+
+                    attributes = attributes(new String[]{"name", "domainName"});
+                    element("Parameter", tempWFSUrl, attributes);
+
+                    attributes = attributes(new String[]{"name", "typeName"});
+                    element("Parameter", datasetInfo.getName(), attributes);
+
+                    end("Resource");
+                    end("Output");
+
+
                 } catch (Exception ex) {
                     // TODO:proper logging
                     System.out.println("Error in creating WFS and WMS mechanims");
-                    System.out.println(ex.getMessage());
                     ex.printStackTrace();
                 }
 
@@ -809,10 +816,9 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     FileOutputStream fos = new FileOutputStream(file);
                     StreamUtils.copy(source, fos);
                     fos.close();
-                    // System.out.println("file copied in: " + file.toString());
                     return new FileInputStream(file);
                 } catch (IOException ex) {
-                    // System.out.println("Problem coping file: " + ex.getMessage());
+                    // TODO: proper logging
                 }
                 return null;
             }
