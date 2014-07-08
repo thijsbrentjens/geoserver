@@ -277,15 +277,14 @@ public class ResourcePool {
      */
     public DataAccessFactory getDataStoreFactory( DataStoreInfo info ) throws IOException {
         DataAccessFactory factory = null;
-
         if ( info.getType() != null ) {
             factory = DataStoreUtils.aquireFactory( info.getType() );
         }
 
         if ( factory == null && info.getConnectionParameters() != null ) {
+
             factory = DataStoreUtils.aquireFactory( getParams( info.getConnectionParameters() , GeoserverDataDirectory.getGeoserverDataDirectory().getCanonicalPath()));
         }
-
         return factory;
     }
 
@@ -310,8 +309,7 @@ public class ResourcePool {
                     if ( dataStore == null ) {
                         //create data store
                         Map<String, Serializable> connectionParameters = info.getConnectionParameters();
-
-                        //call this methdo to execute the hack which recognizes 
+                        //call this methdo to execute the hack which recognizes
                         // urls which are relative to the data directory
                         // TODO: find a better way to do this
                         connectionParameters = DataStoreUtils.getParams(connectionParameters,null);
@@ -325,7 +323,6 @@ public class ResourcePool {
                                     + ", did you forget to install the store extension jar?");
                         }
                         Param[] params = factory.getParametersInfo();
-
                         //ensure that the namespace parameter is set for the datastore
                         if (!connectionParameters.containsKey( "namespace") && params != null) {
                             //if we grabbed the factory, check that the factory actually supports
@@ -362,7 +359,6 @@ public class ResourcePool {
                                 }
                             }
                         }
-
                         dataStore = DataStoreUtils.getDataAccess(connectionParameters);
                         if (dataStore == null) {
                             /*

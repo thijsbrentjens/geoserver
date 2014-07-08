@@ -10,6 +10,7 @@ import gmx.iderc.geoserver.tjs.catalog.TJSCatalogObject;
 import gmx.iderc.geoserver.tjs.catalog.TJSCatalogVisitor;
 import org.geotools.feature.NameImpl;
 import org.opengis.feature.type.Name;
+import java.io.Serializable;
 
 /**
  * @author capote
@@ -22,6 +23,10 @@ public class TJSCatalogObjectImpl implements TJSCatalogObject {
     boolean enabled;
 
     transient TJSCatalog catalog;
+
+    public TJSCatalogObjectImpl() {
+        // dummy implementation
+    }
 
     public TJSCatalogObjectImpl(TJSCatalog catalog) {
         this.catalog = catalog;
