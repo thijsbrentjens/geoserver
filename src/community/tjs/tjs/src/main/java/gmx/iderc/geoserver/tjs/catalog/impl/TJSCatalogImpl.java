@@ -339,9 +339,14 @@ public class TJSCatalogImpl implements TJSCatalog {
     }
 
     private void updateDatasetsIndex() {
+        // Thijs: add a try/catch to avoid errors reloading the confix.xml if JoinData requests have been processed
         for (DatasetInfo dataSet : dataSets.values()) {
-            storeDataSets.put(dataSet.getDataStore().getId(), dataSet);
-            frameworkDataSets.put(dataSet.getFramework().getId(), dataSet);
+            try {
+                storeDataSets.put(dataSet.getDataStore().getId(), dataSet);
+                frameworkDataSets.put(dataSet.getFramework().getId(), dataSet);
+            } catch (Exception e) {
+                // ??
+            }
         }
     }
 

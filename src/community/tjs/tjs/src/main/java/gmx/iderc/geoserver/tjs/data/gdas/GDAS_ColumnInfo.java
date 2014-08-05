@@ -16,8 +16,8 @@ import java.util.Map;
  */
 public class GDAS_ColumnInfo extends ReadonlyColumnInfo {
 
-    GDASType gdasType;
-    ColumnType1 columnType;
+    transient GDASType gdasType;
+    transient ColumnType1 columnType;
 
     public GDAS_ColumnInfo(ColumnType1 columnType) {
         this.columnType = columnType;

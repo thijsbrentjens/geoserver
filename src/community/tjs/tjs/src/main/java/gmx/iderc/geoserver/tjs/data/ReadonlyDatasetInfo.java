@@ -16,7 +16,7 @@ import java.util.Date;
  */
 public abstract class ReadonlyDatasetInfo implements DatasetInfo {
 
-    protected TJSCatalog tjsCatalog;
+    transient protected TJSCatalog tjsCatalog;
 
     @Override
     public void setFramework(FrameworkInfo frameworkInfo) {

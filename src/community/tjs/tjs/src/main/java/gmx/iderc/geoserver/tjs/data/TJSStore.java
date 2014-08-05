@@ -48,15 +48,25 @@ public class TJSStore extends StoreInfoImpl implements DataStoreInfo, Serializab
     }
 
     public String getName() {
-        return store.getFrameworkInfo().getName();
+        // Thijs: trying to avoid NPEs when reloading the config.xml
+        if (store != null) {
+            return store.getFrameworkInfo().getName();
+        }   else {
+            return null;
+        }
     }
 
     public void setName(String name) {
-        //this.name = name;
+        // this.name = name;
     }
 
     public String getDescription() {
-        return store.getFrameworkInfo().getDescription();
+        // Thijs: trying to avoid NPEs when reloading the config.xml
+        if (store != null) {
+            return store.getFrameworkInfo().getDescription();
+        }   else {
+            return null;
+        }
     }
 
     public void setDescription(String description) {
@@ -79,7 +89,12 @@ public class TJSStore extends StoreInfoImpl implements DataStoreInfo, Serializab
     }
 
     public boolean isEnabled() {
-        return store.getFrameworkInfo().getEnabled();
+        // Thijs: trying to avoid NPEs when reloading the config.xml
+        if (store != null) {
+            return store.getFrameworkInfo().getEnabled();
+        }   else {
+            return false;
+        }
     }
 
     public void setEnabled(boolean enabled) {
@@ -87,8 +102,16 @@ public class TJSStore extends StoreInfoImpl implements DataStoreInfo, Serializab
         store.getFrameworkInfo().setEnabled(enabled);
     }
 
+    // TODO: the try/catch is a workaround to avoid an NPE when reloading he confog.
+    // TODO: refactor this, to make sure the workspaceinfo could be found
     public WorkspaceInfo getWorkspace() {
-        return catalog.getWorkspaceByName(TJSExtension.TJS_TEMP_WORKSPACE);  //To change body of implemented methods use File | Settings | File Templates.
+        WorkspaceInfo wi = null;
+        try {
+            wi = catalog.getWorkspaceByName(TJSExtension.TJS_TEMP_WORKSPACE) ;
+        }   catch (Exception e) {
+
+        }
+        return wi;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public void setWorkspace(WorkspaceInfo workspace) {
@@ -99,7 +122,12 @@ public class TJSStore extends StoreInfoImpl implements DataStoreInfo, Serializab
         // TODO: workaround to provide some params?
         Map<String, Serializable> params = new HashMap<String, Serializable>();
 
-        params.put("FrameworkId", store.getFrameworkInfo().getId());
+        // Thijs: workaround to try to get around the exceptions when reloading the config
+        try {
+            params.put("FrameworkId", store.getFrameworkInfo().getId());
+        } catch (Exception e) {
+
+        }
         // params.put("FrameworkId", store.getFrameworkInfo().getId());
         return params;  //To change body of implemented methods use File | Settings | File Templates.
     }

@@ -29,8 +29,16 @@ import java.util.List;
  */
 public class GDAS_DatasetInfo extends ReadonlyDatasetInfo {
 
-    GDASType gdasType;
+    // avoid that these types are serialized ?
+    // use transient or not?
+    transient GDASType gdasType;
+    DataStoreInfo dataStoreInfo;
+
     String tableName;
+
+    /* public GDAS_DatasetInfo() {
+        // dummy implementation to avoid serialization
+    }  */
 
     public GDAS_DatasetInfo(GDASType gdasType, TJSCatalog catalog, String url) {
         this.tjsCatalog = catalog;
@@ -48,8 +56,6 @@ public class GDAS_DatasetInfo extends ReadonlyDatasetInfo {
         }
     }
 
-    DataStoreInfo dataStoreInfo;
-
     @Override
     public void setDataStore(DataStoreInfo dataStoreInfo) {
         this.dataStoreInfo = dataStoreInfo;
@@ -62,7 +68,12 @@ public class GDAS_DatasetInfo extends ReadonlyDatasetInfo {
 
     @Override
     public FrameworkInfo getFramework() {
-        return tjsCatalog.getFrameworkByUri(gdasType.getFramework().getFrameworkURI());
+        // Thijs: improve because of reloading config.xml
+       try {
+           return tjsCatalog.getFrameworkByUri(gdasType.getFramework().getFrameworkURI());
+       } catch (Exception e) {
+           return null;
+       }
     }
 
     @Override

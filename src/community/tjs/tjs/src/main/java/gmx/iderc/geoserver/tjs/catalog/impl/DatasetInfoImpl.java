@@ -24,6 +24,9 @@ import java.util.logging.Logger;
 /**
  * @author root
  */
+
+// TODO: THijs: should this be serializable?
+
 public class DatasetInfoImpl extends TJSCatalogObjectImpl implements DatasetInfo, Serializable {
 
     String frameworkId;
@@ -45,6 +48,11 @@ public class DatasetInfoImpl extends TJSCatalogObjectImpl implements DatasetInfo
 
     HashMap<String, ColumnInfo> columns = new HashMap<String, ColumnInfo>();
     private boolean autojoin;
+
+    /* for serializable */
+    public DatasetInfoImpl() {
+        // dummy implementation, to avoid serialization?
+    }
 
     public DatasetInfoImpl(TJSCatalog catalog) {
         super(catalog);
