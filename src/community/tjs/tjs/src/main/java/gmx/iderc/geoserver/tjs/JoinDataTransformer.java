@@ -506,7 +506,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
 
                 } catch (Exception ex) {
                     // TODO:proper logging
-                    System.out.println("Error in creating WFS and WMS mechanims");
+                    // System.out.println("Error in creating WFS and WMS mechanims");
                     ex.printStackTrace();
                 }
 
