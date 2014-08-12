@@ -257,10 +257,10 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         if (gdas == null) {
                             return;
                         }
-
+                        String newStyleName = null;
                         GDAS_DatasetInfo gdas_datasetInfo = new GDAS_DatasetInfo(gdas, catalog, request.getAttributeData().getGetDataURL());
                         if (request.getMapStyling() != null){
-                            handleMapStyling(gdas_datasetInfo, request.getMapStyling());
+                            newStyleName = handleMapStyling(gdas_datasetInfo, request.getMapStyling());
                         }
 
                         String frameworkURI = gdas.getFramework().getFrameworkURI();
@@ -277,7 +277,9 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         
                         // Thijs: create a WMS and WFS mechanism here. For output in all kinds of formats.
                         // this also means that the TJS_WebMapServer is nog longer needed
-                        setUpWFSandWMSMechanism(frameworkInfo, gdas_datasetInfo);
+                        // TODO: refactor for new stylename? Causes an stack overflow if handled in the handleMapStyling alone
+                        // Needs some more research
+                        setUpWFSandWMSMechanism(frameworkInfo, gdas_datasetInfo, newStyleName);
 
                         end("JoinedOutputs");
 
@@ -296,7 +298,8 @@ public abstract class JoinDataTransformer extends TransformerBase {
                 }
             }
 
-            private void handleMapStyling(DatasetInfo datasetInfo, MapStylingType mapStyling) {
+            private String handleMapStyling(DatasetInfo datasetInfo, MapStylingType mapStyling) {
+                String newStyleName = null;
                 if (mapStyling.getStylingURL() != null){
                     URL url = null;
                     try {
@@ -318,8 +321,8 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         StyledLayerDescriptor styledLayerDescriptor = sldParser.parseSLD();
 
                         StyleInfo newStyleInfo = getGeoserverCatalog().getFactory().createStyle();
-                        String styleName = "GDASStyle"+String.valueOf(System.currentTimeMillis());
-                        newStyleInfo.setName(styleName);
+                        newStyleName = "GDASStyle"+String.valueOf(System.currentTimeMillis());
+                        newStyleInfo.setName(newStyleName);
                         String styleFileName = newStyleInfo.getName() + ".sld";
                         newStyleInfo.setFilename(styleFileName);
                         getGeoserverCatalog().add(newStyleInfo);
@@ -329,13 +332,14 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         getGeoserverCatalog().getResourcePool().writeStyle(newStyleInfo, in);
                         in.close();
 
-                        datasetInfo.setDefaultStyle(styleName);
+                        datasetInfo.setDefaultStyle(newStyleName);
                     } catch (MalformedURLException e) {
                         e.printStackTrace();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
+                return newStyleName;
             }
 
             JoinedMapInfo makeJoinedMapByGetDataURL(String getDataURL, String frameworkURI, String datasetURI) {
@@ -392,9 +396,8 @@ public abstract class JoinDataTransformer extends TransformerBase {
 
             // Thijs: WORK IN PROGRESS
             // Need to refactor code, to extract the datastore and featuretype creation code
-            // Now needed to first SetupWWFSMechanism
 
-            private void setUpWFSandWMSMechanism(FrameworkInfo frameworkInfo, DatasetInfo datasetInfo) throws IOException {
+            private void setUpWFSandWMSMechanism(FrameworkInfo frameworkInfo, DatasetInfo datasetInfo, String newStyleName) throws IOException {
                 try {
 
                     WorkspaceInfo tempWorkspaceInfo = createTempWorkspace();
@@ -405,15 +408,13 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     tempTJSStore.setWorkspace(tempWorkspaceInfo);
 
                     // datasetInfo.getName()
-                    System.out.println("DatasetURI: " + datasetInfo.getDatasetUri());
                     String newFeatureTypeName = datasetInfo.getName();
-
                     System.out.println("newFeatureTypeName " + newFeatureTypeName);
 
                     Catalog gsCatalog = getGeoserverCatalog();
 
                     if (catalog.getDatasetByUri(datasetInfo.getDatasetUri()) != null ){
-                        System.out.println("Dataset already exists, we use ");
+                        // System.out.println("Dataset already exists, we use : " + catalog.getDatasetByUri(datasetInfo.getDatasetUri()).getDatasetName());
                     } else {
                         // TODO: what if the datasetInfo is already there?
                         catalog.add(datasetInfo);
@@ -441,7 +442,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         }
 
                         // Create a full Geoserver datastore and layer, if tge featuretype is not available yet
-                        // TODO: decide what to do if the JoinData equest is processed again, but then with another GDAS data content
+                        // TODO: decide what to do if the JoinData request is processed again, but then with another GDAS data content
                         // Should there be a new layer or just an updaye of the cache
                         // Should it be able to clear the cache, using a parameter maybe?  This is part of the TJS spec?
 
@@ -469,15 +470,19 @@ public abstract class JoinDataTransformer extends TransformerBase {
                             }
                             // explicitly add the SRS code
                             featureTypeInfo.setSRS(((TJSFeatureSource) featureSource).getSRS());
+
                             gsCatalog.add(featureTypeInfo);
 
                             builder.setWorkspace(tempWorkspaceInfo);
                             builder.setStore(tempTJSStore);
 
-                            // TODO: Needed?
                             builder.setupBounds(featureTypeInfo, featureSource);
 
                             LayerInfo layer = builder.buildLayer(featureTypeInfo);
+                            if (newStyleName != null) {
+                                StyleInfo defaultStyle = gsCatalog.getStyleByName(newStyleName);
+                                layer.setDefaultStyle(defaultStyle);
+                            }
                             gsCatalog.add(layer);
                         }
                     }
