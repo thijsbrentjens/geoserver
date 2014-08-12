@@ -266,7 +266,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         String frameworkURI = gdas.getFramework().getFrameworkURI();
                         FrameworkInfo frameworkInfo = catalog.getFrameworkByUri(frameworkURI);
                         if (frameworkInfo == null) {
-                            throw new TJSException("This version only support hosted framework's URI");
+                            throw new TJSException("This version only supports hosted framework's URI");
                         }
                         handleFramework(frameworkInfo);
 
@@ -275,16 +275,19 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         // setUpWMSMechanism(frameworkInfo, gdas.getFramework().getDataset().getDatasetURI());
                         // setUpWMSMechanism(frameworkInfo, gdas_datasetInfo);
                         
-                        // Thijs: TODO: create a WFS mechanism here. For output in all kinds of formats.
+                        // Thijs: create a WMS and WFS mechanism here. For output in all kinds of formats.
+                        // this also means that the TJS_WebMapServer is nog longer needed
                         setUpWFSandWMSMechanism(frameworkInfo, gdas_datasetInfo);
 
                         end("JoinedOutputs");
 
-                        // for WMS
-                        makeJoinedMapByGetDataURL(request.getAttributeData().getGetDataURL(),
+                        // for WMS ?
+                        // Thijs: this seems not longer necessary for the WMS GetFeatureInfo results
+                        // we could skip the interceptor?
+                        /* makeJoinedMapByGetDataURL(request.getAttributeData().getGetDataURL(),
                                                          gdas.getFramework().getFrameworkURI(),
                                                          gdas.getFramework().getDataset().getDatasetURI());
-
+                        /* */
                     } catch (ParserConfigurationException ex) {
                         LOGGER.log(Level.SEVERE, ex.getMessage());
                     } catch (SAXException ex) {
@@ -401,69 +404,83 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     TJSStore tempTJSStore = new TJSStore(tjs100DataStore,getGeoserverCatalog());
                     tempTJSStore.setWorkspace(tempWorkspaceInfo);
 
-                    // TODO: what if the datasetInfo is already there?
-                    catalog.add(datasetInfo);
-
-                    // org.geoserver.catalog.DataStoreInfo dsInfo = (org.geoserver.catalog.DataStoreInfo)tempTJSStore;
-
-                    // if the temp datastore does not exist, create a new one
-                    Catalog gsCatalog = getGeoserverCatalog();
-                    List<DataStoreInfo> tjsTempDataStores = gsCatalog.getDataStoresByWorkspace(tempWorkspaceInfo); // TJSExtension.TJS_TEMP_WORKSPACE
-
-                    String tempDataStoreName = tempTJSStore.getName();
-                    DataStoreInfo dsInfoNew = getTempDatastoreIfExists(tjsTempDataStores, tempDataStoreName);
-
-                    if (dsInfoNew == null) {
-                        builder.setWorkspace(tempWorkspaceInfo);
-                        dsInfoNew = builder.buildDataStore(TJSExtension.TJS_TEMP_WORKSPACE) ;
-                        dsInfoNew.setName(tempDataStoreName);
-                        try {
-                            // TODO: deal with existing datastores
-                            gsCatalog.add((DataStoreInfo)tempTJSStore);
-                        } catch (Exception ex) {
-                            // TODO: logger
-                            System.out.println(ex.getMessage());
-                        }
-                    }
-
-                    // Create a full Geoserver datastore and layer, it e featuretype is not available yet
-                    // TODO: decied what to do if the JoinData equest is processed again, but then with another GDAS data content
-                    // Should there be a new layer or just an updaye of the cache
-                    // Should it be able to clear the cache, using a parameter maybe?
+                    // datasetInfo.getName()
+                    System.out.println("DatasetURI: " + datasetInfo.getDatasetUri());
                     String newFeatureTypeName = datasetInfo.getName();
 
-                    List<FeatureTypeInfo> featureTypes = gsCatalog.getResourcesByStore(dsInfoNew, FeatureTypeInfo.class);
-                    FeatureTypeInfo featureTypeInfo = getFeatureTypeInfoIfExists(featureTypes, datasetInfo.getName());
-                    if (featureTypeInfo == null) {
+                    System.out.println("newFeatureTypeName " + newFeatureTypeName);
 
-                        builder.setStore(tempTJSStore);
+                    Catalog gsCatalog = getGeoserverCatalog();
 
-                        FeatureSource featureSource = (FeatureSource)tjs100DataStore.getFeatureSource(newFeatureTypeName);
-                        featureTypeInfo = builder.buildFeatureType(featureSource) ;
+                    if (catalog.getDatasetByUri(datasetInfo.getDatasetUri()) != null ){
+                        System.out.println("Dataset already exists, we use ");
+                    } else {
+                        // TODO: what if the datasetInfo is already there?
+                        catalog.add(datasetInfo);
 
-                        CoordinateReferenceSystem crs = ((TJSFeatureSource)featureSource).getCRS();
+                        // org.geoserver.catalog.DataStoreInfo dsInfo = (org.geoserver.catalog.DataStoreInfo)tempTJSStore;
 
-                        ReferencedEnvelope bounds = featureSource.getBounds();
-                        featureTypeInfo.setNativeBoundingBox(bounds);
-                        // TODO: what if we don't have a CRS / crs==null. What to do? Stop adding the featuretype?
-                        featureTypeInfo.setNativeCRS(crs);
-                        if (crs!=null) {
-                            featureTypeInfo.setLatLonBoundingBox(bounds.transform(CRS.decode("EPSG:4326"), true)); // true: lenient?
+                        // if the temp datastore does not exist, create a new one
+
+                        List<DataStoreInfo> tjsTempDataStores = gsCatalog.getDataStoresByWorkspace(tempWorkspaceInfo); // TJSExtension.TJS_TEMP_WORKSPACE
+
+                        String tempDataStoreName = tempTJSStore.getName();
+                        DataStoreInfo dsInfoNew = getTempDatastoreIfExists(tjsTempDataStores, tempDataStoreName);
+
+                        if (dsInfoNew == null) {
+                            builder.setWorkspace(tempWorkspaceInfo);
+                            dsInfoNew = builder.buildDataStore(TJSExtension.TJS_TEMP_WORKSPACE) ;
+                            dsInfoNew.setName(tempDataStoreName);
+                            try {
+                                // TODO: deal with existing datastores
+                                gsCatalog.add((DataStoreInfo)tempTJSStore);
+                            } catch (Exception ex) {
+                                // TODO: logger
+                                System.out.println(ex.getMessage());
+                            }
                         }
-                        // explicitly add the SRS code
-                        featureTypeInfo.setSRS(((TJSFeatureSource) featureSource).getSRS());
-                        gsCatalog.add(featureTypeInfo);
 
-                        builder.setWorkspace(tempWorkspaceInfo);
-                        builder.setStore(tempTJSStore);
+                        // Create a full Geoserver datastore and layer, if tge featuretype is not available yet
+                        // TODO: decide what to do if the JoinData equest is processed again, but then with another GDAS data content
+                        // Should there be a new layer or just an updaye of the cache
+                        // Should it be able to clear the cache, using a parameter maybe?  This is part of the TJS spec?
 
-                        // TODO: Needed?
-                        builder.setupBounds(featureTypeInfo, featureSource);
 
-                        LayerInfo layer = builder.buildLayer(featureTypeInfo);
-                        gsCatalog.add(layer);
+                        // Thijs: TODO: try to get a name without a . in it?
+                        // newFeatureTypeName = newFeatureTypeName.replace(".","_");
+
+                        List<FeatureTypeInfo> featureTypes = gsCatalog.getResourcesByStore(dsInfoNew, FeatureTypeInfo.class);
+                        FeatureTypeInfo featureTypeInfo = getFeatureTypeInfoIfExists(featureTypes, datasetInfo.getName());
+                        if (featureTypeInfo == null) {
+
+                            builder.setStore(tempTJSStore);
+
+                            FeatureSource featureSource = (FeatureSource)tjs100DataStore.getFeatureSource(newFeatureTypeName);
+                            featureTypeInfo = builder.buildFeatureType(featureSource) ;
+
+                            CoordinateReferenceSystem crs = ((TJSFeatureSource)featureSource).getCRS();
+
+                            ReferencedEnvelope bounds = featureSource.getBounds();
+                            featureTypeInfo.setNativeBoundingBox(bounds);
+                            // TODO: what if we don't have a CRS / crs==null. What to do? Stop adding the featuretype?
+                            featureTypeInfo.setNativeCRS(crs);
+                            if (crs!=null) {
+                                featureTypeInfo.setLatLonBoundingBox(bounds.transform(CRS.decode("EPSG:4326"), true)); // true: lenient?
+                            }
+                            // explicitly add the SRS code
+                            featureTypeInfo.setSRS(((TJSFeatureSource) featureSource).getSRS());
+                            gsCatalog.add(featureTypeInfo);
+
+                            builder.setWorkspace(tempWorkspaceInfo);
+                            builder.setStore(tempTJSStore);
+
+                            // TODO: Needed?
+                            builder.setupBounds(featureTypeInfo, featureSource);
+
+                            LayerInfo layer = builder.buildLayer(featureTypeInfo);
+                            gsCatalog.add(layer);
+                        }
                     }
-
 
                     // output for WMS
                     start("Output");
@@ -473,14 +490,14 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     start("Resource");
 
                     String getTempWMSUrl = getTempWMSUrl(tempWorkspaceInfo);
-                    element("URL", getTempWMSUrl + "?request=GetCapabilities&service=WMS");
+                    element("URL", getTempWMSUrl + "?request=GetCapabilities&service=WMS");  // has to be including the GetCapabilities parameters, according to the TJS spec
 
                     AttributesImpl attributes = attributes(new String[]{"name", "domainName"});
                     element("Parameter", getTempWMSUrl, attributes);
 
                     // for WMS this shall be layers
                     attributes = attributes(new String[]{"name", "layers"});
-                    element("Parameter", datasetInfo.getName(), attributes);
+                    element("Parameter", newFeatureTypeName, attributes);
 
                     end("Resource");
                     end("Output");
@@ -498,7 +515,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     element("Parameter", tempWFSUrl, attributes);
 
                     attributes = attributes(new String[]{"name", "typeName"});
-                    element("Parameter", datasetInfo.getName(), attributes);
+                    element("Parameter", newFeatureTypeName, attributes);
 
                     end("Resource");
                     end("Output");
