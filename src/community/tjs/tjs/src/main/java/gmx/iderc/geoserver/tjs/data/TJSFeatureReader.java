@@ -36,20 +36,23 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     HashMap<Object, Integer> index = new HashMap<Object, Integer>();
 
     private Object lookup(Object keyValue, String fieldName) {
-        try {
-            int absRow = index.get(keyValue);
-            if (absRow >= 0) {
-                if (rst.absolute(absRow)) {
-                    int findex = rst.findColumn(fieldName);
-                    if (findex >= 0) {
-                        return rst.getObject(findex);
+        if (keyValue != null) {
+            try {
+                int absRow = -1;
+                try { absRow = index.get(keyValue); }  catch (Exception e){}
+                if (absRow >= 0) {
+                    if (rst.absolute(absRow)) {
+                        int findex = rst.findColumn(fieldName);
+                        if (findex >= 0) {
+                            return rst.getObject(findex);
+                        }
                     }
                 }
+            } catch (SQLException ex) {
+                Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
+            }  catch (Exception ex) {
+                Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
             }
-        } catch (SQLException ex) {
-            Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
-        }  catch (Exception ex) {
-            Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
         }
         return null;
     }
@@ -99,14 +102,18 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
 
     public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
 
+        // TODO: do the loop the other way around? Use the rst to loop over features and not all features?
         SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(type);
         SimpleFeature wfsFeature = featureReader.next();
         featureBuilder.addAll(wfsFeature.getAttributes());
+
+        SimpleFeature ft = null;
 
         String frameworkKey = datasetInfo.getFramework().getFrameworkKey().getName();
         Object keyValue = wfsFeature.getAttribute(frameworkKey);
 
         // TODO: decide if no result, then return null and skip the result? Or add all result and provide empty values (as done now)
+        boolean match = false;
         for (ColumnInfo column : datasetInfo.getColumns()) {
             Object newValue = null;
             try {
@@ -118,20 +125,32 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
             }
             if (newValue == null) {
                 newValue = "";
+            } else {
+                // We doe have at least one value, so we can continue building the feature
+                match = true;
             }
+            // TODO: always to string?
             featureBuilder.set(column.getName(), newValue.toString());
         }
 
+        if (!match) {
+            Logger.getLogger(TJSFeatureReader.class).warn("We don't have an object match for " + wfsFeature.getID() + ", let's continue with the next feature..");
+            // TODO: handle this situation. Recurse maybe?
+        }
+
         try {
-            SimpleFeature ft = featureBuilder.buildFeature(wfsFeature.getID());
+            ft = featureBuilder.buildFeature(wfsFeature.getID());
+            Logger.getLogger(TJSFeatureReader.class).debug("We have a feature " + ft.getID());
             return ft;
         } catch (Exception ex) {
             Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
         }
-        return null;
+
+        return ft;
     }
 
     public boolean hasNext() throws IOException {
+        // TODO: this is important if only the number of joined objects should be returned?
         return featureReader.hasNext();
     }
 }

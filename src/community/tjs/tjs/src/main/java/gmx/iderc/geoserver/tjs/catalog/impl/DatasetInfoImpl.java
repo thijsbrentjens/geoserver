@@ -251,7 +251,7 @@ public class DatasetInfoImpl extends TJSCatalogObjectImpl implements DatasetInfo
 
     @Override
     public void setDefaultStyle(String styleName) {
-        defaultStyle = styleName;
+        this.defaultStyle = styleName;
     }
 
     @Override

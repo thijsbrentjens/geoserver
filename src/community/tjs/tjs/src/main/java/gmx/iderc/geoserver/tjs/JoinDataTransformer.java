@@ -258,7 +258,10 @@ public abstract class JoinDataTransformer extends TransformerBase {
                             return;
                         }
                         String newStyleName = null;
+
                         GDAS_DatasetInfo gdas_datasetInfo = new GDAS_DatasetInfo(gdas, catalog, request.getAttributeData().getGetDataURL());
+
+
                         if (request.getMapStyling() != null){
                             newStyleName = handleMapStyling(gdas_datasetInfo, request.getMapStyling());
                         }
@@ -409,7 +412,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
 
                     // datasetInfo.getName()
                     String newFeatureTypeName = datasetInfo.getName();
-                    System.out.println("newFeatureTypeName " + newFeatureTypeName);
+                    // System.out.println("newFeatureTypeName " + newFeatureTypeName);
 
                     Catalog gsCatalog = getGeoserverCatalog();
 

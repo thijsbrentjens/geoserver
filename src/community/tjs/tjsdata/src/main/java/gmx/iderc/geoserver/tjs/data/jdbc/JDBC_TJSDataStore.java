@@ -70,12 +70,19 @@ public abstract class JDBC_TJSDataStore extends TJSAbstractDataStore {
                 String sschema = tables.getString(ischema);
                 int iname = tables.findColumn("TABLE_NAME");
                 String sname = tables.getString(iname);
+                // Thijs Brentjens: to get the featuretypename working, without the database schema, don't add the schema to the featuretypename
+                // Therefore: don't add the schema to the tablelist, but just add the name
+                //
+                // TODO: improve handling of the schema in tablenames for the GDAS cache?
+                // System.out.println("In getAllAvaliableDatasources: " + sschema + "." +sname);
+                /*
                 if (sschema == null){
 //                    tableList.add(sname.toUpperCase());
                     tableList.add(sname);
                 }else{
                     tableList.add(sschema + "." + sname);
-                }
+                } */
+                tableList.add(sname);
             }
             tables.close();
         } catch (SQLException ex) {

@@ -44,6 +44,7 @@ public class GDAS_DatasetInfo extends ReadonlyDatasetInfo {
         this.tjsCatalog = catalog;
         this.gdasType = gdasType;
 
+        // TODO: use something else than the tablename?
         tableName = HSQLDB_GDAS_Cache.importGDAS(gdasType, url);
         DataStoreInfo dataStore = catalog.getDataStore("gdas_cache");
         if (dataStore == null){
