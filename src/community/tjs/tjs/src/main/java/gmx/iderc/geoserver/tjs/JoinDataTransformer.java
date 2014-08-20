@@ -400,20 +400,31 @@ public abstract class JoinDataTransformer extends TransformerBase {
                 try {
 
                     WorkspaceInfo tempWorkspaceInfo = createTempWorkspace();
-                    CatalogBuilder builder = new CatalogBuilder(getGeoserverCatalog());
+                    Catalog gsCatalog = getGeoserverCatalog();
+                    System.out.println("gsCatalog " + gsCatalog.toString());
+
+                    CatalogBuilder builder = new CatalogBuilder(gsCatalog);
+
+                    System.out.println("builder " + builder.toString());
 
                     TJS_1_0_0_DataStore tjs100DataStore = createTJSDataStore(frameworkInfo);
-                    TJSStore tempTJSStore = new TJSStore(tjs100DataStore,getGeoserverCatalog());
+                    System.out.println("tjs100DataStore " + tjs100DataStore.toString());
+                    System.out.println("frameworkInfo " + frameworkInfo.toString());
+
+                    TJSStore tempTJSStore = new TJSStore(tjs100DataStore,gsCatalog);
                     tempTJSStore.setWorkspace(tempWorkspaceInfo);
 
                     // datasetInfo.getName()
+                    System.out.println("datasetInfo " + datasetInfo.toString());
                     String newFeatureTypeName = datasetInfo.getName();
-                    // System.out.println("newFeatureTypeName " + newFeatureTypeName);
+                    System.out.println("newFeatureTypeName " + newFeatureTypeName);
 
-                    Catalog gsCatalog = getGeoserverCatalog();
+                    // Catalog gsCatalog = getGeoserverCatalog();
 
                     if (catalog.getDatasetByUri(datasetInfo.getDatasetUri()) != null ){
-                        // System.out.println("Dataset already exists, we use : " + catalog.getDatasetByUri(datasetInfo.getDatasetUri()).getDatasetName());
+                        System.out.println("Dataset already exists, we use : " + catalog.getDatasetByUri(datasetInfo.getDatasetUri()).getDatasetName());
+                        // TODO: check if layer really exists, otherwise, remove it?
+
                     } else {
                         // TODO: what if the datasetInfo is already there?
                         catalog.add(datasetInfo);

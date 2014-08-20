@@ -134,8 +134,7 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         }
 
         if (!match) {
-            Logger.getLogger(TJSFeatureReader.class).warn("We don't have an object match for " + wfsFeature.getID() + ", let's continue with the next feature..");
-            // TODO: handle this situation. Recurse maybe?
+            Logger.getLogger(TJSFeatureReader.class).info("We don't have an object match for " + wfsFeature.getID() + ", let's continue with the next feature.");
         }
 
         try {
