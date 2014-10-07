@@ -46,18 +46,7 @@ See https://github.com/ojajoh/tjs-demonstrator for the demonstrator
 
 Installation
 =====================
-The TJS extension currently requires two (small) changes in the Geoserver core code of 2.2.4. 
-To install, you could either add the built libraries or compile the code yourself.
-
-Download the following ZIP-file with jars and place them in geoserver/WEB-INF/lib/:
-
-https://github.com/thijsbrentjens/geoserver/blob/tjs_2.2.x/binaries/libs-20131219.zip
-
-=======
-
-Currently, the plugin adds GeoJSON output. The build should include the required libraries. There is a WAR-file available online which includes these changes and the plugin. This needs testing as well.
-
-Restart the geoserver application after adding the jars.
+The TJS extension currently requires two (small) changes in the Geoserver core code of 2.2.4 and the extra libraries from the TJS extension. These can be build from the community/tjs/ directory, see Compilation below.
 
 Compilation
 =====================
