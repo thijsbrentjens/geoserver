@@ -1,4 +1,5 @@
-/* Copyright (c) 2001 - 2013 OpenPlans - www.openplans.org. All rights reserved.
+/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+ * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
  */
@@ -184,16 +185,21 @@ public class GeoJSONGetFeatureResponse extends WFSGetFeatureOutputFormat {
                             Object value = feature.getAttribute(id_option);
                             jsonWriter.key("id").value(value);
                         }
+                        
                         GeometryDescriptor defaultGeomType = fType.getGeometryDescriptor();
+                        if(defaultGeomType != null) {
+                            CoordinateReferenceSystem featureCrs =
+                                    defaultGeomType.getCoordinateReferenceSystem();
+                            
+                            jsonWriter.setAxisOrder(CRS.getAxisOrder(featureCrs));
+                            
+                            if (crs == null)
+                                crs = featureCrs;
+                        } else  {
+                            // If we don't know, assume EAST_NORTH so that no swapping occurs
+                            jsonWriter.setAxisOrder(CRS.AxisOrder.EAST_NORTH);
+                        }
                         
-                        CoordinateReferenceSystem featureCrs =
-                                fType.getGeometryDescriptor().getCoordinateReferenceSystem();
-                        
-                        jsonWriter.setAxisOrder(CRS.getAxisOrder(featureCrs));
-                        
-                        if (crs == null && defaultGeomType != null)
-                            crs = fType.getGeometryDescriptor().getCoordinateReferenceSystem();
-
                         jsonWriter.key("geometry");
                         Geometry aGeom = (Geometry) feature.getDefaultGeometry();
 
