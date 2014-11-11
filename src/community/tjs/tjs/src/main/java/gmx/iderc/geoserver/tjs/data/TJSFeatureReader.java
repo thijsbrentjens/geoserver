@@ -112,6 +112,8 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         String frameworkKey = datasetInfo.getFramework().getFrameworkKey().getName();
         Object keyValue = wfsFeature.getAttribute(frameworkKey);
 
+
+        // TODO: take into account keys as integers and what if a String is used as     key
         // TODO: decide if no result, then return null and skip the result? Or add all result and provide empty values (as done now)
         boolean match = false;
         for (ColumnInfo column : datasetInfo.getColumns()) {
