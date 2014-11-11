@@ -44,7 +44,13 @@ public class GDAS_Importer_Thread extends Thread {
         sqlbuilder.append("CREATE TABLE ");
         sqlbuilder.append(tableName + "(");
         ColumnType2 fktype = (ColumnType2) columnset.getFrameworkKey().getColumn().get(0);
-        sqlbuilder.append(fktype.getName() + " " + getSQLTypeAsString(fktype.getType().getLiteral()));
+        String sqlType = getSQLTypeAsString(fktype.getType().getLiteral());
+        if (sqlType=="varchar") {
+            // Thijs: also add the length of the Varchar attribute.
+            // TODO: use the length of the GDAS type.
+            sqlType += " (255)";
+        }
+        sqlbuilder.append(fktype.getName() + " " + sqlType);
 
         for (int index = 0; index < columnset.getAttributes().getColumn().size(); index++) {
             ColumnType1 attribute = (ColumnType1) columnset.getAttributes().getColumn().get(index);
@@ -52,7 +58,13 @@ public class GDAS_Importer_Thread extends Thread {
                 continue;
             }
             sqlbuilder.append(", ");
-            sqlbuilder.append(attribute.getName() + " " + getSQLTypeAsString(attribute.getType().getLiteral()));
+            sqlType = getSQLTypeAsString(fktype.getType().getLiteral());
+            if (sqlType=="varchar") {
+                // Thijs: also add the length of the Varchar attribute.
+                // TODO: use the length of the GDAS type.
+                sqlType += " (255)";
+            }
+            sqlbuilder.append(attribute.getName() + " " + sqlType);
         }
 
         sqlbuilder.append(");");

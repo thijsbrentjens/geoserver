@@ -22,4 +22,4 @@ http://localhost:8080/geoserver/tjs?request=DescribeKey&frameworkURI=http://www.
 If you have GDAS encoded data (for example some statistics, without geometry, in a tabular format), you could join this data to the spatial framework.
 This GDAS format is specifically designed for TJS (but could be used for other things as well). If you have a CSV file, you need to convert that to GDAS.
 
-How to do this, is described later.
+How to do this, is described later. 
