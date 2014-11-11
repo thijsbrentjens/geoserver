@@ -114,10 +114,13 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
 
         // TODO: decide if no result, then return null and skip the result? Or add all result and provide empty values (as done now)
         boolean match = false;
+
+        // TODO: Thijs Brentjens, for codesprint
+        // What if the value is an Integer? cast it?
         for (ColumnInfo column : datasetInfo.getColumns()) {
             Object newValue = null;
             try {
-                if (keyValue!=null) {
+                if (keyValue != null) {
                     newValue = lookup(keyValue, column.getName());
                 }
             } catch (Exception ex) {
@@ -129,7 +132,7 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
                 // We doe have at least one value, so we can continue building the feature
                 match = true;
             }
-            // TODO: always to string?
+            // TODO: always to string? Or to the type as defined in the GDAS file?
             featureBuilder.set(column.getName(), newValue.toString());
         }
 
