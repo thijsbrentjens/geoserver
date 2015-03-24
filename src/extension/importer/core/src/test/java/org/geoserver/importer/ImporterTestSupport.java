@@ -24,6 +24,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.util.JSONBuilder;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.custommonkey.xmlunit.SimpleNamespaceContext;
 import org.custommonkey.xmlunit.XMLUnit;
@@ -32,6 +33,7 @@ import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.catalog.FeatureTypeInfo;
 import org.geoserver.catalog.LayerInfo;
+import org.geoserver.catalog.PublishedType;
 import org.geoserver.catalog.StoreInfo;
 import org.geoserver.catalog.StyleInfo;
 import org.geoserver.catalog.WorkspaceInfo;
@@ -81,7 +83,7 @@ public abstract class ImporterTestSupport extends GeoServerSystemTestSupport {
     @After
     public void cleanCatalog() throws IOException {
         for (StoreInfo s : getCatalog().getStores(StoreInfo.class)) {
-            removeStore(null, s.getName());
+            removeStore(s.getWorkspace().getName(), s.getName());
         }
         for (StyleInfo s : getCatalog().getStyles()) {
             String styleName = s.getName();
@@ -125,7 +127,7 @@ public abstract class ImporterTestSupport extends GeoServerSystemTestSupport {
         assertNotNull(layer.getDefaultStyle());
         assertNotNull(layer.getResource().getProjectionPolicy());
         
-        if (layer.getType() == LayerInfo.Type.VECTOR) {
+        if (layer.getType() == PublishedType.VECTOR) {
             FeatureTypeInfo featureType = (FeatureTypeInfo) layer.getResource();
             FeatureSource source = featureType.getFeatureSource(null, null);
             assertTrue(source.getCount(Query.ALL) > 0);
@@ -196,7 +198,7 @@ public abstract class ImporterTestSupport extends GeoServerSystemTestSupport {
                 }
             });
             for (File f : dbFiles) {
-                assertTrue(f.delete());
+                assertTrue("Failed to remove file " + f.getPath(), FileUtils.deleteQuietly(f));
             }
         }
     

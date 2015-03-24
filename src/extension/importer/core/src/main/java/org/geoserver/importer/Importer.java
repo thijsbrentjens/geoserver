@@ -5,15 +5,8 @@
  */
 package org.geoserver.importer;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
-import com.thoughtworks.xstream.XStream;
-import com.vividsolutions.jts.geom.Geometry;
 import java.io.File;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,6 +37,16 @@ import org.geoserver.catalog.WorkspaceInfo;
 import org.geoserver.config.util.XStreamPersister;
 import org.geoserver.config.util.XStreamPersister.CRSConverter;
 import org.geoserver.config.util.XStreamPersisterFactory;
+import org.geoserver.importer.ImportTask.State;
+import org.geoserver.importer.job.Job;
+import org.geoserver.importer.job.JobQueue;
+import org.geoserver.importer.job.ProgressMonitor;
+import org.geoserver.importer.job.Task;
+import org.geoserver.importer.mosaic.Mosaic;
+import org.geoserver.importer.transform.RasterTransformChain;
+import org.geoserver.importer.transform.ReprojectTransform;
+import org.geoserver.importer.transform.TransformChain;
+import org.geoserver.importer.transform.VectorTransformChain;
 import org.geoserver.platform.ContextLoadedEvent;
 import org.geoserver.platform.GeoServerExtensions;
 import org.geotools.data.DataStore;
@@ -60,25 +63,20 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.referencing.CRS;
 import org.geotools.util.logging.Logging;
-import org.geoserver.importer.ImportTask.State;
-import org.geoserver.importer.job.Job;
-import org.geoserver.importer.job.JobQueue;
-import org.geoserver.importer.job.ProgressMonitor;
-import org.geoserver.importer.job.Task;
-import org.geoserver.importer.mosaic.Mosaic;
-import org.geoserver.importer.transform.RasterTransformChain;
-import org.geoserver.importer.transform.ReprojectTransform;
-import org.geoserver.importer.transform.TransformChain;
-import org.geoserver.importer.transform.VectorTransformChain;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
-
 import org.opengis.feature.type.FeatureType;
 import org.opengis.filter.Filter;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
+
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
+import com.thoughtworks.xstream.XStream;
+import com.vividsolutions.jts.geom.Geometry;
 
 /**
  * Primary controller/facade of the import subsystem.
@@ -107,6 +105,13 @@ public class Importer implements DisposableBean, ApplicationListener {
     public Importer(Catalog catalog) {
         this.catalog = catalog;
         this.styleGen = new StyleGenerator(catalog);
+    }
+
+    /**
+     * Returns the style generator.
+     */
+    public StyleGenerator getStyleGenerator() {
+        return styleGen;
     }
 
     ImportStore createContextStore() {
@@ -499,8 +504,10 @@ public class Importer implements DisposableBean, ApplicationListener {
             // from the input data
             for (ImportTask t : format.list(data, catalog, context.progress())) {
                 //initialize transform chain based on vector vs raster
-                t.setTransform(format instanceof VectorFormat 
-                        ? new VectorTransformChain() : new RasterTransformChain());
+                if (t.getTransform() == null) {
+                    t.setTransform(format instanceof VectorFormat ? new VectorTransformChain()
+                            : new RasterTransformChain());
+                }
                 t.setDirect(direct);
                 t.setStore(targetStore);
 
@@ -810,7 +817,7 @@ public class Importer implements DisposableBean, ApplicationListener {
 
         try {
             //set up transform chain
-            TransformChain tx = (TransformChain) task.getTransform();
+            TransformChain tx = task.getTransform();
             
             //apply pre transform
             if (!doPreTransform(task, task.getData(), tx)) {
@@ -827,6 +834,7 @@ public class Importer implements DisposableBean, ApplicationListener {
             task.setState(ImportTask.State.COMPLETE);
         }
         catch(Exception e) {
+            LOGGER.log(Level.WARNING, "Task failed during import: " + task, e);
             task.setState(ImportTask.State.ERROR);
             task.setError(e);
         }
@@ -1202,6 +1210,15 @@ public class Importer implements DisposableBean, ApplicationListener {
         NamespaceInfo ns = catalog.getNamespaceByPrefix(store.getWorkspace().getName());
         
         String name = resource.getName();
+
+        // make sure the name conforms to a legal layer name
+        if (!Character.isLetter(name.charAt(0))) {
+            name = "a_" + name;
+        }
+
+        // strip out any non-word characters
+        name = name.replaceAll("\\W", "_");
+
         if (catalog.getResourceByName(ns, name, ResourceInfo.class) != null) {
             int i = 0;
             name += i;
@@ -1310,19 +1327,9 @@ public class Importer implements DisposableBean, ApplicationListener {
         // @todo this needs implementation in geotools
         SimpleFeatureType schema = ds.getSchema(featureTypeName);
         if (schema != null) {
-            if (ds instanceof JDBCDataStore) {
-                JDBCDataStore dataStore = (JDBCDataStore) ds;
-                Connection conn = dataStore.getConnection(Transaction.AUTO_COMMIT);
-                Statement st = null;
-                try {
-                    st = conn.createStatement();
-                    st.execute("drop table " + featureTypeName);
-                    LOGGER.fine("dropSchema " + featureTypeName + " successful");
-                } finally {
-                    dataStore.closeSafe(conn);
-                    dataStore.closeSafe(st);
-                }
-            } else {
+            try {
+                ds.removeSchema(featureTypeName);
+            } catch(Exception e) {
                 LOGGER.warning("Unable to dropSchema " + featureTypeName + " from datastore " + ds.getClass());
             }
         } else {

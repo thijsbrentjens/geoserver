@@ -5,15 +5,16 @@
  */
 package org.geoserver.web.demo;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 import org.geoserver.catalog.LayerGroupInfo;
 import org.geoserver.catalog.LayerInfo;
+import org.geoserver.catalog.WorkspaceInfo;
 import org.geoserver.data.test.MockData;
 import org.geoserver.web.GeoServerWicketTestSupport;
 import org.junit.Test;
+
+import com.google.common.collect.Lists;
 
 public class PreviewLayerProviderTest extends GeoServerWicketTestSupport {
 
@@ -45,7 +46,7 @@ public class PreviewLayerProviderTest extends GeoServerWicketTestSupport {
         
         LayerGroupInfo group = getCatalog().getFactory().createLayerGroup();
         group.setName("testSingleLayerGroup");
-        group.setMode(LayerGroupInfo.Mode.SINGLE);        
+        group.setMode(LayerGroupInfo.Mode.SINGLE);
         group.getLayers().add(layer);
         group.setTitle("This is the title");
         group.setAbstract("This is the abstract");
@@ -58,8 +59,30 @@ public class PreviewLayerProviderTest extends GeoServerWicketTestSupport {
             assertEquals("This is the abstract", pl.getAbstract());
         } finally {
             getCatalog().remove(group);
-        }        
-    }    
+        }
+    }
+    
+    @Test
+    public void testWorkspacedLayerGroup() throws Exception {
+        String layerId = getLayerId(MockData.BUILDINGS);
+        LayerInfo layer = getCatalog().getLayerByName(layerId);
+        WorkspaceInfo ws = getCatalog().getWorkspaceByName("cite");
+        
+        LayerGroupInfo group = getCatalog().getFactory().createLayerGroup();
+        group.setName("testWorkspacedLayerGroup");
+        group.setMode(LayerGroupInfo.Mode.SINGLE);
+        group.setWorkspace(ws);
+        group.getLayers().add(layer);
+        getCatalog().add(group);
+        try {
+            PreviewLayerProvider provider = new PreviewLayerProvider();
+            PreviewLayer pl = getPreviewLayer(provider, group.prefixedName());
+            assertNotNull(pl);
+            assertEquals("cite:testWorkspacedLayerGroup", pl.getName());
+        } finally {
+            getCatalog().remove(group);
+        }
+    }
     
     @Test
     public void testContainerLayerGroup() throws Exception {
@@ -68,7 +91,7 @@ public class PreviewLayerProviderTest extends GeoServerWicketTestSupport {
         
         LayerGroupInfo group = getCatalog().getFactory().createLayerGroup();
         group.setName("testContainerLayerGroup");
-        group.setMode(LayerGroupInfo.Mode.CONTAINER);        
+        group.setMode(LayerGroupInfo.Mode.CONTAINER);
         group.getLayers().add(layer);
         getCatalog().add(group);
         try {
@@ -106,9 +129,16 @@ public class PreviewLayerProviderTest extends GeoServerWicketTestSupport {
             getCatalog().remove(containerGroup);
         }        
     }    
-    
+
+    @Test(expected=UnsupportedOperationException.class)
+    public void testGetItems() throws Exception {
+        // Ensure that the method getItems is no more called
+        PreviewLayerProvider provider = new PreviewLayerProvider();
+        provider.getItems();
+    }
+
     private PreviewLayer getPreviewLayer(PreviewLayerProvider provider, String prefixedName) {
-        for (PreviewLayer pl : provider.getItems()) {
+        for (PreviewLayer pl : Lists.newArrayList(provider.iterator(0, Integer.MAX_VALUE))) {
             if(pl.getName().equals(prefixedName)) {
                 return pl; 
             }

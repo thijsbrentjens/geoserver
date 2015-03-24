@@ -6,19 +6,8 @@
 package org.geoserver.catalog.impl;
 
 import static com.google.common.collect.Sets.newHashSet;
-import static org.geoserver.catalog.Predicates.acceptAll;
-import static org.geoserver.catalog.Predicates.asc;
-import static org.geoserver.catalog.Predicates.contains;
-import static org.geoserver.catalog.Predicates.desc;
-import static org.geoserver.catalog.Predicates.equal;
-import static org.geoserver.catalog.Predicates.or;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.geoserver.catalog.Predicates.*;
+import static org.junit.Assert.*;
 
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -35,6 +24,7 @@ import org.geoserver.catalog.CatalogFactory;
 import org.geoserver.catalog.CatalogInfo;
 import org.geoserver.catalog.CoverageInfo;
 import org.geoserver.catalog.CoverageStoreInfo;
+import org.geoserver.catalog.DataLinkInfo;
 import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.catalog.FeatureTypeInfo;
 import org.geoserver.catalog.Keyword;
@@ -65,7 +55,6 @@ import org.opengis.filter.MultiValuedFilter.MatchAction;
 import org.opengis.filter.sort.SortBy;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -1041,6 +1030,35 @@ public class CatalogImplTest {
         catalog.save(ft3);
         FeatureTypeInfo ft5 = catalog.getFeatureTypeByName(ft.getName());
         MetadataLinkInfo ml5 = ft5.getMetadataLinks().get(0);
+        assertEquals("application/json", ml5.getType());
+    }
+    
+    @Test
+    public void testModifyDataLinks() {
+        addFeatureType();
+        
+        FeatureTypeInfo ft2 = catalog.getFeatureTypeByName(ft.getName());
+        DataLinkInfo ml = catalog.getFactory().createDataLink();
+        ml.setContent("http://www.geoserver.org/meta");
+        ml.setType("text/plain");
+        ft2.getDataLinks().clear();
+        ft2.getDataLinks().add(ml);
+        catalog.save(ft2);
+        
+        FeatureTypeInfo ft3 = catalog.getFeatureTypeByName(ft.getName());
+        DataLinkInfo ml3 = ft3.getDataLinks().get(0);
+        ml3.setType("application/json");
+        
+        // do not save and grab another, the metadata link must not have been modified
+        FeatureTypeInfo ft4 = catalog.getFeatureTypeByName(ft.getName());
+        DataLinkInfo ml4 = ft4.getDataLinks().get(0);
+        assertEquals("text/plain", ml4.getType());
+        
+        
+        // now save and grab yet another, the modification must have happened
+        catalog.save(ft3);
+        FeatureTypeInfo ft5 = catalog.getFeatureTypeByName(ft.getName());
+        DataLinkInfo ml5 = ft5.getDataLinks().get(0);
         assertEquals("application/json", ml5.getType());
     }
     
@@ -2691,6 +2709,11 @@ public class CatalogImplTest {
 
         filter = Predicates.fullTextSearch("geotools");
         assertEquals(newHashSet(l2), asSet(catalog.list(LayerInfo.class, filter)));
+
+        // geos-6882
+        catalog.add(lg);
+        filter = Predicates.fullTextSearch("Group");
+        assertEquals(newHashSet(lg), asSet(catalog.list(LayerGroupInfo.class, filter)));
     }
 
     private <T> Set<T> asSet(CloseableIterator<T> list) {

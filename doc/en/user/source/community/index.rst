@@ -24,7 +24,6 @@ officially part of the GeoServer releases. They are however built along with the
    netcdf-out/index
    colormap/index
    jdbcconfig/index
-   importer/index
    mbtiles/index
    geopkg/index
    grib/grib
@@ -33,3 +32,6 @@ officially part of the GeoServer releases. They are however built along with the
    wps-download/index
    jms-cluster/index
    solr/index
+   sldservice/index
+   rest-upload/index
+   geomesa/index

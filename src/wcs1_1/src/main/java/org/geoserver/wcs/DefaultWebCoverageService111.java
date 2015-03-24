@@ -556,7 +556,9 @@ public class DefaultWebCoverageService111 implements WebCoverageService111 {
                 return new GridCoverage[] { bandSelectedCoverage };
             }
         } catch (Throwable e) {
-            CoverageCleanerCallback.addCoverages(coverage);
+            if (coverage != null) {
+                CoverageCleanerCallback.addCoverages(coverage);
+            }
             if (e instanceof WcsException) {
                 throw (WcsException) e;
             } else {
@@ -888,7 +890,7 @@ public class DefaultWebCoverageService111 implements WebCoverageService111 {
             boolean interpolationSupported = false;
 
             if (interpolation.equalsIgnoreCase("nearest")) {
-                interpolation = "nearest neighbor";
+                interpolation = "nearest";
             } else if (interpolation.equalsIgnoreCase("cubic") || interpolation.equalsIgnoreCase("bicubic")) {
                 interpolation = "bicubic";
             } else if (interpolation.equalsIgnoreCase("linear") || interpolation.equalsIgnoreCase("bilinear")) {
@@ -896,7 +898,7 @@ public class DefaultWebCoverageService111 implements WebCoverageService111 {
             }
 
             for (String method : info.getInterpolationMethods()) {
-                if (interpolation.equalsIgnoreCase(method)) {
+                if (method.toLowerCase().startsWith(interpolation)) {
                     interpolationSupported = true;
                     break;
                 }

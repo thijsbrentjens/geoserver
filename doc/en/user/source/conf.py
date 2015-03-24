@@ -39,18 +39,18 @@ master_doc = 'index'
 # General substitutions.
 project = u'GeoServer'
 manual = u'User Manual'
-copyright = u'2014, OpenPlans'
+copyright = u'2015, Open Source Geospatial Foundation'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '2.7'
+version = '2.8'
 # The full version, including alpha/beta/rc tags.
-release = '2.7-SNAPSHOT'
+release = '2.8-SNAPSHOT'
 # Users don't need to see the "SNAPSHOT" notation when it's there
 if release.find('SNAPSHOT') != -1:
-   release = '2.7.x'
+   release = '2.8.x'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -107,7 +107,7 @@ rst_epilog = "\n" \
  ".. |install_directory_mac| replace:: :file:`/Applications`\n" \
  ".. |data_directory_winXP| replace:: :file:`C:\Program Files\\\\GeoServer "+release+"\\\\data_dir`\n" \
  ".. |data_directory_win| replace:: :file:`C:\\\\Program Files (x86)\\\\GeoServer "+release+"\\\\data_dir`\n" \
- ".. |data_directory_linux| replace:: :file:`/var/lib/tomcat7/webapps/geoserver/data_dir`\n" \
+ ".. |data_directory_linux| replace:: :file:`/var/lib/tomcat7/webapps/geoserver/data`\n" \
  ".. |data_directory_mac| replace:: :file:`/Applications/GeoServer.app/Contents/Resources/Java/data_dir`"
 
 # Options for HTML output
