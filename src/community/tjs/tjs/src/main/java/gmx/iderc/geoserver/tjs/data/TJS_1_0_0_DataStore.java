@@ -112,7 +112,7 @@ public class TJS_1_0_0_DataStore extends AbstractDataStore {        // AbstractD
         return getSchema(name.getLocalPart());
     }
 
-    // or  create a feature source here? Dynamically or persist data in database and create a new datasource from that?
+    // or  create a feature source here
     @Override
     public TJSFeatureSource getFeatureSource(String typeName) {
         return new TJSFeatureSource(this, typeName);
@@ -131,7 +131,8 @@ public class TJS_1_0_0_DataStore extends AbstractDataStore {        // AbstractD
         String wfsTypeName = frameworkInfo.getFeatureType().getNativeName();
         FeatureReader<SimpleFeatureType, SimpleFeature> wfsFeatureReader = featureDataStore.getFeatureReader(new DefaultQuery(wfsTypeName), new DefaultTransaction());
         DatasetInfo datasetInfo = catalog.getDatasetByFramework(frameworkInfo.getId(), typeName);
-        return new TJSFeatureReader(getSchema(typeName), wfsFeatureReader, datasetInfo);
+        TJSFeatureReader featureReader =  new TJSFeatureReader(getSchema(typeName), wfsFeatureReader, datasetInfo);
+        return featureReader;
     }
 
 }

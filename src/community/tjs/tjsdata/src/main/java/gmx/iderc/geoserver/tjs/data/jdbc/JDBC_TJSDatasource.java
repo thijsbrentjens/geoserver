@@ -38,7 +38,7 @@ public class JDBC_TJSDatasource implements TJSDatasource {
         this.dataSourceName = (String) params.get("Data Source Name");
     }
 
-    private Connection getConnection() {
+    public Connection getConnection() {
         if (connection != null) {
             return connection;
         }
@@ -47,7 +47,19 @@ public class JDBC_TJSDatasource implements TJSDatasource {
         } catch (Exception error) {
             Logger.getLogger(JDBC_TJSDatasource.class.getName(), error.getMessage());
         }
+
         return connection;
+    }
+
+    public void closeConnection() {
+        if (connection != null) {
+            try {
+                connection.close();
+                connection = null;
+            } catch (Exception error) {
+                Logger.getLogger(JDBC_TJSDatasource.class.getName(), error.getMessage());
+            }
+        }
     }
 
     public RowSet getRowSet() throws SQLException {
@@ -55,6 +67,8 @@ public class JDBC_TJSDatasource implements TJSDatasource {
             CachedRowSetImpl cachedRowSet = new CachedRowSetImpl();
             cachedRowSet.setCommand(getSQL());
             cachedRowSet.execute(getConnection());
+            // Thijs Brentjens: close the connection to avoid blocking other Joins (because maxconnections was reached)
+            closeConnection();
             return cachedRowSet;
         } catch (IOException ex) {
             Logger.getLogger(JDBC_TJSDatasource.class.getName()).log(Level.SEVERE, null, ex);
@@ -91,6 +105,7 @@ public class JDBC_TJSDatasource implements TJSDatasource {
             //a la hora de buscar los campos usar el esquema y la tabla deseada,
             //Alvaro Javier Fuentes Suarez
             ResultSet fields = getConnection().getMetaData().getColumns(null, schema, tableName, null);
+            // ResultSet fields = dataSource.getConnection().getMetaData().getColumns(null, schema, tableName, null);
             while (fields.next()) {
                 int iname = fields.findColumn("COLUMN_NAME");
                 String sname = fields.getString(iname);
@@ -104,7 +119,12 @@ public class JDBC_TJSDatasource implements TJSDatasource {
     }
 
     private String getSQL() throws IOException {
-        String dsName = (String) JDBC_TJSDataStoreFactory.DATASOURCENAME.lookUp(params);
+        String dsName="";
+        try {
+           dsName = (String) JDBC_TJSDataStoreFactory.DATASOURCENAME.lookUp(params);
+        }  catch (Exception e) {
+            Logger.getLogger(JDBC_TJSDatasource.class.getName(), e.getMessage());
+        }
         return "SELECT * FROM " + dsName;
     }
 

@@ -113,6 +113,7 @@ public class TJSFeatureSource extends AbstractFeatureSource {           // not C
                 crs = store.getFrameworkInfo().getFeatureType().getCRS();
                 if (crs == null) {
                     crs = store.featureDataStore.getSchema(store.getFrameworkInfo().getFeatureType().getNativeName()).getCoordinateReferenceSystem();
+
                 }
              }  catch (IOException ex) {
                 ex.printStackTrace();

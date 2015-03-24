@@ -63,8 +63,10 @@ public abstract class JDBC_TJSDataStore extends TJSAbstractDataStore {
     @Override
     public String[] getAllAvaliableDatasources() {
         ArrayList<String> tableList = new ArrayList<String>();
+        ResultSet tables = null;
         try {
-            ResultSet tables = getConnection().getMetaData().getTables(null, null, null, new String[]{"TABLE", "VIEW"});
+            // tables = getConnection().getMetaData().getTables(null, null, null, new String[]{"TABLE", "VIEW"});
+            tables = getConnection().getMetaData().getTables(null, null, null, new String[]{"TABLE", "VIEW"});
             while (tables.next()) {
                 int ischema = tables.findColumn("TABLE_SCHEM");
                 String sschema = tables.getString(ischema);
@@ -88,6 +90,13 @@ public abstract class JDBC_TJSDataStore extends TJSAbstractDataStore {
         } catch (SQLException ex) {
             Logger.getLogger(JDBC_TJSDataStore.class.getName()).log(Level.SEVERE, null, ex);
         }
+        finally {
+            try {
+                tables.close();
+            }catch (SQLException ex) {
+                Logger.getLogger(JDBC_TJSDataStore.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
         return tableList.toArray(new String[tableList.size()]);
     }
 
@@ -103,7 +112,8 @@ public abstract class JDBC_TJSDataStore extends TJSAbstractDataStore {
             if (!paramsDsName.equalsIgnoreCase(name)){
                 params.put(JDBC_TJSDataStoreFactory.DATASOURCENAME.key, name);
             }
-        } catch (IOException ex) {
+        } catch (Exception ex) {
+            Logger.getLogger(JDBC_TJSDataStore.class.getName()).log(Level.WARNING, null, ex);
             params.put(JDBC_TJSDataStoreFactory.DATASOURCENAME.key, name);
         }
         return super.getDatasource(name, params);

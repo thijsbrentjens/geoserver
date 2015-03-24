@@ -69,11 +69,10 @@ public class GDAS_Importer_Thread extends Thread {
 
         sqlbuilder.append(");");
         String sql = sqlbuilder.toString();
-
-        System.out.println("Thijs: createHostGDASTable: sql = " + sql);
         try {
             Statement statement = HSQLDB_GDAS_Cache.getConnection().createStatement();
             statement.executeUpdate(sql);
+            statement.close();
         } catch (SQLException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             return null;

@@ -9,6 +9,7 @@ import gmx.iderc.geoserver.tjs.catalog.impl.DataStoreInfoImpl;
 import gmx.iderc.geoserver.tjs.catalog.impl.DatasetInfoImpl;
 import gmx.iderc.geoserver.tjs.catalog.impl.JoinedMapInfoImpl;
 import gmx.iderc.geoserver.tjs.catalog.impl.TJSCatalogImpl;
+import gmx.iderc.geoserver.tjs.data.TJSFeatureReader;
 import gmx.iderc.geoserver.tjs.data.TJSFeatureSource;
 import gmx.iderc.geoserver.tjs.data.TJS_1_0_0_DataStore;
 
@@ -401,41 +402,33 @@ public abstract class JoinDataTransformer extends TransformerBase {
 
                     WorkspaceInfo tempWorkspaceInfo = createTempWorkspace();
                     Catalog gsCatalog = getGeoserverCatalog();
-                    System.out.println("gsCatalog " + gsCatalog.toString());
 
                     CatalogBuilder builder = new CatalogBuilder(gsCatalog);
 
-                    System.out.println("builder " + builder.toString());
-
                     TJS_1_0_0_DataStore tjs100DataStore = createTJSDataStore(frameworkInfo);
-                    System.out.println("tjs100DataStore " + tjs100DataStore.toString());
-                    System.out.println("frameworkInfo " + frameworkInfo.toString());
 
                     TJSStore tempTJSStore = new TJSStore(tjs100DataStore,gsCatalog);
                     tempTJSStore.setWorkspace(tempWorkspaceInfo);
 
                     // datasetInfo.getName()
-                    System.out.println("datasetInfo " + datasetInfo.toString());
                     String newFeatureTypeName = datasetInfo.getName();
-                    System.out.println("newFeatureTypeName " + newFeatureTypeName);
 
                     // Catalog gsCatalog = getGeoserverCatalog();
 
                     if (catalog.getDatasetByUri(datasetInfo.getDatasetUri()) != null ){
-                        System.out.println("Dataset already exists, we use : " + catalog.getDatasetByUri(datasetInfo.getDatasetUri()).getDatasetName());
                         // TODO: check if layer really exists, otherwise, remove it?
 
                     } else {
                         // TODO: what if the datasetInfo is already there?
-                        catalog.add(datasetInfo);
 
-                        // org.geoserver.catalog.DataStoreInfo dsInfo = (org.geoserver.catalog.DataStoreInfo)tempTJSStore;
+                        catalog.add(datasetInfo);
 
                         // if the temp datastore does not exist, create a new one
 
                         List<DataStoreInfo> tjsTempDataStores = gsCatalog.getDataStoresByWorkspace(tempWorkspaceInfo); // TJSExtension.TJS_TEMP_WORKSPACE
 
                         String tempDataStoreName = tempTJSStore.getName();
+
                         DataStoreInfo dsInfoNew = getTempDatastoreIfExists(tjsTempDataStores, tempDataStoreName);
 
                         if (dsInfoNew == null) {
@@ -447,7 +440,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                                 gsCatalog.add((DataStoreInfo)tempTJSStore);
                             } catch (Exception ex) {
                                 // TODO: logger
-                                System.out.println(ex.getMessage());
+                                ex.printStackTrace();
                             }
                         }
 
@@ -463,14 +456,11 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         List<FeatureTypeInfo> featureTypes = gsCatalog.getResourcesByStore(dsInfoNew, FeatureTypeInfo.class);
                         FeatureTypeInfo featureTypeInfo = getFeatureTypeInfoIfExists(featureTypes, datasetInfo.getName());
                         if (featureTypeInfo == null) {
-
                             builder.setStore(tempTJSStore);
 
                             FeatureSource featureSource = (FeatureSource)tjs100DataStore.getFeatureSource(newFeatureTypeName);
                             featureTypeInfo = builder.buildFeatureType(featureSource) ;
-
                             CoordinateReferenceSystem crs = ((TJSFeatureSource)featureSource).getCRS();
-
                             ReferencedEnvelope bounds = featureSource.getBounds();
                             featureTypeInfo.setNativeBoundingBox(bounds);
                             // TODO: what if we don't have a CRS / crs==null. What to do? Stop adding the featuretype?
@@ -478,16 +468,14 @@ public abstract class JoinDataTransformer extends TransformerBase {
                             if (crs!=null) {
                                 featureTypeInfo.setLatLonBoundingBox(bounds.transform(CRS.decode("EPSG:4326"), true)); // true: lenient?
                             }
+
                             // explicitly add the SRS code
                             featureTypeInfo.setSRS(((TJSFeatureSource) featureSource).getSRS());
-
                             gsCatalog.add(featureTypeInfo);
-
                             builder.setWorkspace(tempWorkspaceInfo);
                             builder.setStore(tempTJSStore);
 
                             builder.setupBounds(featureTypeInfo, featureSource);
-
                             LayerInfo layer = builder.buildLayer(featureTypeInfo);
                             if (newStyleName != null) {
                                 StyleInfo defaultStyle = gsCatalog.getStyleByName(newStyleName);
@@ -496,7 +484,6 @@ public abstract class JoinDataTransformer extends TransformerBase {
                             gsCatalog.add(layer);
                         }
                     }
-
                     // output for WMS
                     start("Output");
 
@@ -517,7 +504,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     end("Resource");
                     end("Output");
 
-                    // TODO: thijs, is this correct TJS output?
+                    // TODO: Thijs, is this correct TJS output?
                     // output for WFS
                     start("Output");
                     handleWFSMechanism();

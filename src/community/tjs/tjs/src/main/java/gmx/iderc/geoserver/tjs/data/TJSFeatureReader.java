@@ -3,6 +3,7 @@ package gmx.iderc.geoserver.tjs.data;
 import com.sun.rowset.CachedRowSetImpl;
 import gmx.iderc.geoserver.tjs.catalog.ColumnInfo;
 import gmx.iderc.geoserver.tjs.catalog.DatasetInfo;
+import gmx.iderc.geoserver.tjs.data.jdbc.JDBC_TJSDatasource;
 import org.apache.log4j.Logger;
 import org.geotools.data.DataStore;
 import org.geotools.data.FeatureReader;
@@ -32,6 +33,7 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     DatasetInfo datasetInfo;
     SimpleFeatureType type;
     CachedRowSetImpl rst;
+    TJSDatasource tjsDatasource = null;
 
     HashMap<Object, Integer> index = new HashMap<Object, Integer>();
 
@@ -67,7 +69,6 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     public TJSFeatureReader(ContentState contentState) {
         // TODO Thijs: check for nulls / not available parts  ?
         SimpleFeatureType ft =  contentState.getFeatureType();
-
         new TJSFeatureReader(ft, this.featureReader, this.datasetInfo)  ;
     }
 
@@ -78,7 +79,10 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         // TODO: determine if features without joined results should be skipped  / removed or have empty values
         try {
             rst = new CachedRowSetImpl();
-            RowSet remote = datasetInfo.getTJSDatasource().getRowSet();
+            if (this.tjsDatasource==null)  {
+                this.tjsDatasource = datasetInfo.getTJSDatasource();
+            }
+            RowSet remote = this.tjsDatasource.getRowSet();
             rst.populate(remote);
             remote.close();
             indexRowSet();
@@ -92,7 +96,10 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     }
 
     public void close() throws IOException {
-        featureReader.close();
+        this.featureReader.close();
+        /*if (this.tjsDatasource!=null) {
+            // ((JDBC_TJSDatasource)this.tjsDatasource).closeConnection();
+        }*/
         try {
             rst.close();
         } catch (SQLException ex) {

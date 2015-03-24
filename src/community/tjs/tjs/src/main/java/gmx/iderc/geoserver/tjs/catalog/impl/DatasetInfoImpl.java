@@ -181,10 +181,12 @@ public class DatasetInfoImpl extends TJSCatalogObjectImpl implements DatasetInfo
     }
 
     public TJSDatasource getTJSDatasource() {
+        System.out.println("getTJSDatasource start ");
         TJSDataStore store = getDataStore().getTJSDataStore(new NullProgressListener());
-        return store.getDatasource(datasetName, getDataStore().getConnectionParameters());
+        TJSDatasource tjsDatasource = store.getDatasource(datasetName, getDataStore().getConnectionParameters())   ;
+        System.out.println("got a TJS Datasource");
+        return tjsDatasource;
     }
-
     private void updateColumns() throws SQLException {
 
         ResultSetMetaData rstMeta = getTJSDatasource().getResultSetMetaData();
@@ -219,6 +221,7 @@ public class DatasetInfoImpl extends TJSCatalogObjectImpl implements DatasetInfo
                 }
             }
         }
+
     }
 
     public List<ColumnInfo> getColumns() {

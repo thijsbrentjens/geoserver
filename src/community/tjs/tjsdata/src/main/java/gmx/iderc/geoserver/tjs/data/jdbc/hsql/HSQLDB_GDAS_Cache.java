@@ -27,10 +27,9 @@ public class HSQLDB_GDAS_Cache {
     static String schemaName = "PUBLIC";
 
     static private boolean existCacheTables() throws SQLException {
-        // Thijs: should there be a schema in here or not?
-        //now  without schemaName?
+        // Thijs Brentjens: should there be a schema in here or not?
+        // now  without schemaName?
         ResultSet tables = getConnection().getMetaData().getTables(null, null, "CACHE", new String[]{"TABLE"});
-
 
         boolean exist = tables.next();
         tables.close();
@@ -65,9 +64,11 @@ public class HSQLDB_GDAS_Cache {
             getInsertPreparedStatement().setTimestamp(2, new Timestamp(now.getTime()));
             getInsertPreparedStatement().setString(3, tableName);
             getInsertPreparedStatement().executeUpdate();
+            getInsertPreparedStatement().close();
+            insertStatement=null;
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();  
         }
         return false;
     }
@@ -78,26 +79,29 @@ public class HSQLDB_GDAS_Cache {
             getUpdatePreparedStatement().setTimestamp(1, new Timestamp(now.getTime()));
             getUpdatePreparedStatement().setString(2, url);
             getUpdatePreparedStatement().executeUpdate();
+            getUpdatePreparedStatement().close();
+            updateStatement = null;
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();  
         }
         return false;
     }
 
     static public String existGDAS(String url){
         try {
-            System.out.println("Thijs: existGDAS: " + url);
             Statement statement = getConnection().createStatement();
             ResultSet resultSet = statement.executeQuery("SELECT TABLENAME FROM CACHE WHERE GDAS_URL='" + url + "';");
             boolean exists = resultSet.next();
-            // Thijs: can this be done differently?
-            String tableName = resultSet.getString(1);
+            String tableName = null;
+            if (exists) {
+                tableName = resultSet.getString(1);
+            }
             resultSet.close();
-            System.out.println("Thijs: existGDAS tableName: " + tableName);
+            statement.close();
             return tableName;
         } catch (SQLException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();  
         }
         return null;
     }
@@ -108,14 +112,13 @@ public class HSQLDB_GDAS_Cache {
             if (!tableName.contains(".")) {
                 // we can add a schemaName
                 // TODO: use a schema name?
-                 // tableName = schemaName+"."+tableName;
+                // tableName = schemaName+"."+tableName;
             }
-            System.out.println("Thijs: clearGDAS tableName: " + tableName);
             statement.executeUpdate("DELETE FROM " + tableName + ";");
             statement.close();
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();  
         }
         return false;
     }
@@ -130,20 +133,16 @@ public class HSQLDB_GDAS_Cache {
         sqlBuilder.append("LOAD_DATE TIMESTAMP,");
         sqlBuilder.append("TABLENAME VARCHAR (255));");
         //Crea un índice que permite buscar rápido si existe un GDAS por la URL
-        // sqlBuilder.append("CREATE INDEX GDAS_URL_IDX ON "+schemaName+".CACHE(GDAS_URL);");
-        // sqlBuilder.append("CREATE INDEX GDAS_URL_IDX ON CACHE(GDAS_URL);");
-
         String sql = sqlBuilder.toString();
-
         try {
-            Statement statement = getConnection().createStatement();
-            System.out.println("SQL statement initCacheIndex: " + sql);
+            Connection connection = getConnection();
+            Statement statement = connection.createStatement();
             statement.executeUpdate(sql);
-
             String sqlIndex =  "CREATE INDEX GDAS_URL_IDX ON CACHE(GDAS_URL);";
             statement.executeUpdate(sqlIndex);
+            statement.close();
         } catch (SQLException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();  
         }
 
     }
@@ -153,11 +152,10 @@ public class HSQLDB_GDAS_Cache {
             return connection;
         }
         try {
+
             Class.forName("org.hsqldb.jdbcDriver");
-
             String tmpDir = System.getProperty("java.io.tmpdir");
-            // Thijs: or better save the database in the datadir?
-
+            // TODO: Thijs: or better save the database in the datadir?
             // Thijs: fix the dir by using proper separator
             tmpDir = tmpDir.concat(File.separator).concat("allgdas").concat(File.separator);
             allgdas = new File(tmpDir);
@@ -170,9 +168,9 @@ public class HSQLDB_GDAS_Cache {
                 initCacheIndex();
             }
         } catch (SQLException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();  
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();  
         }
         return connection;
     }
@@ -182,14 +180,12 @@ public class HSQLDB_GDAS_Cache {
         boolean newGdas = tableName == null;
         if (newGdas){
             // Thijs: should there be a schema "PUBLIC." in front here or not?
-            // Let's try wihout it
+            // Let's try without it
             // tableName = schemaName+gdasType.getFramework().getDataset().getTitle();
             tableName = gdasType.getFramework().getDataset().getTitle();
             tableName = tableName.concat(String.valueOf(System.currentTimeMillis()));
             tableName = tableName.toUpperCase();
-            System.out.println("Thijs: Importing GDAS for tablename " + tableName);
         }else{
-            System.out.println("Thijs: clear GDAS for tablename " + tableName);
             clearGDAS(tableName);
         }
         GDAS_Importer_Thread thread = new GDAS_Importer_Thread(gdasType,  tableName, newGdas);
@@ -198,7 +194,7 @@ public class HSQLDB_GDAS_Cache {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                e.printStackTrace();  
             }
         }
         if (newGdas){
@@ -206,6 +202,15 @@ public class HSQLDB_GDAS_Cache {
         }else{
             update(url, tableName);
         }
+        try {
+            getConnection().close();
+        }  catch (SQLException e) {
+            // TODO: throw this exception?
+            e.printStackTrace() ;
+        }   finally {
+           connection = null;
+        }
+
         return tableName;
     }
 
@@ -220,7 +225,7 @@ public class HSQLDB_GDAS_Cache {
             try {
                 dataStore = factory.createDataStore(params);
             } catch (IOException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                e.printStackTrace();  
             }
         }
         return (HSQLDB_TJSDataStore) dataStore;
