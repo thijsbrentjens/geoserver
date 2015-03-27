@@ -515,6 +515,10 @@ public class ColumnType1Impl extends EObjectImpl implements ColumnType1 {
     public void setName(String newName) {
         String oldName = name;
         name = newName;
+        // Thijs: fix columname: may not be a number to start with, because this causes errors in XML output
+        if (Character.isDigit(name.charAt(0))) {
+            name = "_" + name;
+        }
         if (eNotificationRequired())
             eNotify(new ENotificationImpl(this, Notification.SET, Tjs10Package.COLUMN_TYPE1__NAME, oldName, name));
     }

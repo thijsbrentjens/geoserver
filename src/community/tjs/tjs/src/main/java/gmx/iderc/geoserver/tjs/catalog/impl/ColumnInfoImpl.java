@@ -27,6 +27,7 @@ public class ColumnInfoImpl implements ColumnInfo, Serializable {
     String purpose = "Attribute"; //valor por defecto
 
     public void setName(String name) {
+        System.out.println("ColumnInfoImpl: setName " + name);
         this.name = name;
     }
 

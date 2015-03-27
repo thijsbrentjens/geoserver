@@ -18,7 +18,6 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.protocol.http.servlet.ServletWebRequest;
 import org.apache.wicket.validation.validator.UrlValidator;
 import org.geoserver.web.services.BaseServiceAdminPage;
-import org.geoserver.web.wicket.FileExistsValidator;
 
 import java.io.*;
 import java.net.MalformedURLException;

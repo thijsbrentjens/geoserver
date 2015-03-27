@@ -64,7 +64,12 @@ public class GDAS_Importer_Thread extends Thread {
                 // TODO: use the length of the GDAS type.
                 sqlType += " (255)";
             }
-            sqlbuilder.append(attribute.getName() + " " + sqlType);
+            /* String columnNameFT = attribute.getName();
+            if (Character.isDigit(columnNameFT.charAt(0))) {
+                columnNameFT = "_" + columnNameFT;
+            }
+            System.out.println("set columnname to: " + columnNameFT);    */
+            sqlbuilder.append("\"" + attribute.getName() + "\" " + sqlType);
         }
 
         sqlbuilder.append(");");
@@ -82,6 +87,7 @@ public class GDAS_Importer_Thread extends Thread {
 
     private PreparedStatement getInsertStatement(GDASType gdasType, String tableName) {
         ColumnsetType columnset = gdasType.getFramework().getDataset().getColumnset();
+
         StringBuilder sqlbuilder = new StringBuilder();
         StringBuilder values = new StringBuilder();
 
@@ -103,7 +109,12 @@ public class GDAS_Importer_Thread extends Thread {
                 values.append(", ");
             }
             sqlbuilder.append(", ");
-            sqlbuilder.append(attribute.getName());
+            // TODO: better implementation of safe column names. See class
+            /*String columnNameFT = attribute.getName();
+            if (Character.isDigit(columnNameFT.charAt(0))) {
+                columnNameFT = "_" + columnNameFT;
+            }  */
+            sqlbuilder.append("\"" + attribute.getName() + "\"");
             values.append("?");
             hasValue = true;
         }

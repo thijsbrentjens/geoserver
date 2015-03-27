@@ -4,9 +4,9 @@
  */
 package gmx.iderc.geoserver.tjs.web;
 
+import gmx.iderc.geoserver.tjs.TJSExtensionTestSupport;
 import gmx.iderc.geoserver.tjs.TJSTestSupport;
 import gmx.iderc.geoserver.tjs.catalog.TJSCatalog;
-import gmx.iderc.geoserver.tjs.TJSExtensionTestSupport;
 import org.geoserver.catalog.FeatureTypeInfo;
 import org.geoserver.data.test.MockData;
 import org.geoserver.data.util.IOUtils;
@@ -28,7 +28,8 @@ public abstract class TJSWicketTestSupport extends GeoServerWicketTestSupport {
 
     @Override
     public void oneTimeSetUp() throws Exception {
-        super.oneTimeSetUp();
+        //super.oneTimeSetUp();
+        super.doSetup();
         //tjsCatalog.setCatalog(catalog);
         tjsCatalog = TJSExtensionTestSupport.getTJSCatalog(getTestPersistenceDirectory());
         FeatureTypeInfo fti = getCatalog().getFeatureTypeByName(PROVINCIAS.getLocalPart());

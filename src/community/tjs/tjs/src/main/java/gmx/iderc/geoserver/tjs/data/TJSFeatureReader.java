@@ -135,6 +135,13 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         // TODO: Thijs Brentjens, for codesprint
         // What if the value is an Integer? cast it?
         for (ColumnInfo column : datasetInfo.getColumns()) {
+            // TODO: always to string? Or to the type as defined in the GDAS file?
+            // NOTE: also see other classes for createing the GDAS cache where column names are changed
+            /* String columnNameFT = column.getName();
+            if (Character.isDigit(columnNameFT.charAt(0))) {
+                columnNameFT = "_" + columnNameFT;
+            } */
+            // System.out.println("FeatureReader columnname: " + columnNameFT);
             Object newValue = null;
             try {
                 if (keyValue != null) {
@@ -149,7 +156,6 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
                 // We do have at least one value, so we can continue building the feature
                 match = true;
             }
-            // TODO: always to string? Or to the type as defined in the GDAS file?
             featureBuilder.set(column.getName(), newValue.toString());
         }
 
