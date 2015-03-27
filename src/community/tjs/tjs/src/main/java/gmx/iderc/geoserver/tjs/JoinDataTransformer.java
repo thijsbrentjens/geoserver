@@ -412,7 +412,6 @@ public abstract class JoinDataTransformer extends TransformerBase {
 
                     // datasetInfo.getName()
                     String newFeatureTypeName = datasetInfo.getName();
-
                     // Catalog gsCatalog = getGeoserverCatalog();
 
                     if (catalog.getDatasetByUri(datasetInfo.getDatasetUri()) != null ){
@@ -449,12 +448,9 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         // Should there be a new layer or just an updaye of the cache
                         // Should it be able to clear the cache, using a parameter maybe?  This is part of the TJS spec?
 
-
-                        // Thijs: TODO: try to get a name without a . in it?
-                        // newFeatureTypeName = newFeatureTypeName.replace(".","_");
-
                         List<FeatureTypeInfo> featureTypes = gsCatalog.getResourcesByStore(dsInfoNew, FeatureTypeInfo.class);
-                        FeatureTypeInfo featureTypeInfo = getFeatureTypeInfoIfExists(featureTypes, datasetInfo.getName());
+                        // newFeatureTypeName was: datasetInfo.getName()
+                        FeatureTypeInfo featureTypeInfo = getFeatureTypeInfoIfExists(featureTypes, newFeatureTypeName);
                         if (featureTypeInfo == null) {
                             builder.setStore(tempTJSStore);
 

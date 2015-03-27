@@ -175,6 +175,13 @@ public class HSQLDB_GDAS_Cache {
         return connection;
     }
 
+    static public String createSafeTableName(String tableName){
+        tableName = tableName.replace("-","_");
+        tableName = tableName.replace(".","_");
+        // TODO: or use a quoted tableName only?
+        return tableName;
+    }
+
     public static String importGDAS(GDASType gdasType, String url) {
         String tableName = existGDAS(url);
         boolean newGdas = tableName == null;
@@ -182,7 +189,12 @@ public class HSQLDB_GDAS_Cache {
             // Thijs: should there be a schema "PUBLIC." in front here or not?
             // Let's try without it
             // tableName = schemaName+gdasType.getFramework().getDataset().getTitle();
+            // TODO: Thijs: document how the filename is determined: use the Title of the GDAS-file
             tableName = gdasType.getFramework().getDataset().getTitle();
+            // replace "-" by "_" in the table_name
+            // make the table name no longer than X chars
+            tableName = createSafeTableName(tableName);
+            // Should we include a timestamp or not? I think we shouldn't..
             tableName = tableName.concat(String.valueOf(System.currentTimeMillis()));
             tableName = tableName.toUpperCase();
         }else{

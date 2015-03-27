@@ -130,6 +130,7 @@ public class GDAS_DatasetInfo extends ReadonlyDatasetInfo {
         if (columns.isEmpty()){
             for (int index = 0; index < gdasType.getFramework().getDataset().getColumnset().getAttributes().getColumn().size(); index++){
                 ColumnType1 column = (ColumnType1)gdasType.getFramework().getDataset().getColumnset().getAttributes().getColumn().get(index);
+                System.out.println()
                 columns.put(column.getName(), new GDAS_ColumnInfo(column));
             }
         }
