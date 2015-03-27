@@ -178,7 +178,11 @@ public class HSQLDB_GDAS_Cache {
     static public String createSafeTableName(String tableName){
         tableName = tableName.replace("-","_");
         tableName = tableName.replace(".","_");
-        // TODO: or use a quoted tableName only?
+        // Thijs: shorten the tablename if it is longer than 17 characters. This number is choosen because of the time in millisecons that is added.
+        // TODO: determine how to deal with the length of the tablename and if the timestamp in millisecs is needed
+        if (tableName.length() >= 18) {
+            tableName = tableName.substring(0,17);
+        }
         return tableName;
     }
 
