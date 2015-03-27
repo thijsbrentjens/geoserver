@@ -41,7 +41,20 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         if (keyValue != null) {
             try {
                 int absRow = -1;
-                try { absRow = index.get(keyValue); }  catch (Exception e){}
+                try {
+                    // Convert values to Strings for now, since all GDAS attributes are strings
+                    // TODO: use GDAS types better, but this requires some conversion work
+                    if(keyValue instanceof Double) {
+                        // parse it to a string
+                        keyValue = ((Double) keyValue).intValue();
+                    }
+                    if (keyValue instanceof Integer) {
+                        keyValue = keyValue.toString();
+                    }
+                    absRow = index.get(keyValue);
+                }  catch (Exception ex){
+                    // Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
+                }
                 if (absRow >= 0) {
                     if (rst.absolute(absRow)) {
                         int findex = rst.findColumn(fieldName);
@@ -97,9 +110,6 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
 
     public void close() throws IOException {
         this.featureReader.close();
-        /*if (this.tjsDatasource!=null) {
-            // ((JDBC_TJSDatasource)this.tjsDatasource).closeConnection();
-        }*/
         try {
             rst.close();
         } catch (SQLException ex) {
@@ -136,7 +146,7 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
             if (newValue == null) {
                 newValue = "";
             } else {
-                // We doe have at least one value, so we can continue building the feature
+                // We do have at least one value, so we can continue building the feature
                 match = true;
             }
             // TODO: always to string? Or to the type as defined in the GDAS file?
