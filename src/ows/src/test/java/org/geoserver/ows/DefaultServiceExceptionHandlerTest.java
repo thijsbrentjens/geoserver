@@ -21,8 +21,6 @@ import org.geotools.util.Version;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
-import org.owasp.encoder.*;
-
 import com.mockrunner.mock.web.MockHttpServletRequest;
 import com.mockrunner.mock.web.MockHttpServletResponse;
 import com.mockrunner.mock.web.MockServletOutputStream;
@@ -98,7 +96,7 @@ public class DefaultServiceExceptionHandlerTest extends TestCase {
         
         Node exceptionText = XPathAPI.selectSingleNode(doc, "ows:ExceptionReport/ows:Exception/ows:ExceptionText/text()");
         assertNotNull(exceptionText);
-        assertEquals("round-tripped through character entities", Encode.forXml(message), exceptionText.getTextContent());
+        assertEquals("round-tripped through character entities", message, exceptionText.getTextContent());
     }
     
     @SuppressWarnings("unchecked")
@@ -122,7 +120,7 @@ public class DefaultServiceExceptionHandlerTest extends TestCase {
         Node exceptionText = XPathAPI.selectSingleNode(doc, "ows:ExceptionReport/ows:Exception/ows:ExceptionText/text()");
         assertNotNull(exceptionText);
         String message = message1 + "\n" + message2;
-        assertEquals("round-tripped through character entities", Encode.forXml(message), exceptionText.getTextContent());
+        assertEquals("round-tripped through character entities", message, exceptionText.getTextContent());
     }
 
     public void testHandleServiceExceptionCauses() throws Exception {
@@ -151,29 +149,5 @@ public class DefaultServiceExceptionHandlerTest extends TestCase {
         assertTrue(exceptionText.indexOf(ioException.getMessage()) != -1);
         assertTrue(exceptionText.indexOf(serviceException.getMessage()) != -1);
     }
-
-    public void testHandleServiceExceptionNullMessages() throws Exception {
-        // create a stack of three exceptions
-        NullPointerException npe = new NullPointerException();
-        ServiceException serviceException = new ServiceException("hello service exception");
-        serviceException.setCode("helloCode");
-        serviceException.setLocator("helloLocator");
-        serviceException.getExceptionText().add("NullPointerException");
-        serviceException.initCause(npe);
-        handler.handleServiceException(serviceException, requestInfo);
-
-        InputStream input = new ByteArrayInputStream(response.getOutputStreamContent().getBytes());
-
-        DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
-        docBuilderFactory.setNamespaceAware(true);
-
-        Document doc = docBuilderFactory.newDocumentBuilder().parse(input);
-        Node exceptionTextNode = XPathAPI.selectSingleNode(doc,
-                "ows:ExceptionReport/ows:Exception/ows:ExceptionText/text()");
-        assertNotNull(exceptionTextNode);
-        // normalise whitespace
-        String exceptionText = exceptionTextNode.getNodeValue().replaceAll("\\s+", " ");
-        // used to contain an extra " null" at the end
-        assertEquals("hello service exception NullPointerException", exceptionText);
-    }
 }
+
