@@ -12,11 +12,14 @@ import org.geotools.data.store.ContentFeatureCollection;
 
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.util.logging.Logging;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.io.IOException;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,6 +29,8 @@ import java.io.IOException;
  * To change this template use File | Settings | File Templates.
  */
 public class TJSFeatureSource extends AbstractFeatureSource {           // not ContentFeatureSource  ? AbstractFeatureSource
+
+    static final Logger LOGGER = Logging.getLogger("gmx.iderc.geoserver.tjs.data.TJSFeatureSource");
 
     TJS_1_0_0_DataStore store;
     String typeName;
@@ -85,19 +90,25 @@ public class TJSFeatureSource extends AbstractFeatureSource {           // not C
 
     public final ReferencedEnvelope getBounds ()  throws IOException {
         CoordinateReferenceSystem crs = getCRS();
+        // Thijs: using the cacheBounds seems to help in the heap space errors? Caused by connection usage maybe?
         if (crs != null ) {
-            ReferencedEnvelope bounds  = new ReferencedEnvelope( crs );
-            FeatureReader<SimpleFeatureType, SimpleFeature> featureReader = store.getFeatureReader(this.typeName);
-            try {
-                while( featureReader.hasNext() ){
-                    SimpleFeature feature = featureReader.next();
-                    bounds.include( feature.getBounds() );
+            if (cacheBounds!=null) {
+                return cacheBounds;
+            } else {
+                ReferencedEnvelope bounds  = new ReferencedEnvelope( crs );
+                FeatureReader<SimpleFeatureType, SimpleFeature> featureReader = store.getFeatureReader(this.typeName);
+                try {
+                    while( featureReader.hasNext() ){
+                        SimpleFeature feature = featureReader.next();
+                        bounds.include( feature.getBounds() );
+                    }
                 }
+                finally {
+                    featureReader.close();
+                }
+                cacheBounds = bounds;
+                return bounds;
             }
-            finally {
-                featureReader.close();
-            }
-            return bounds;
         } else {
             return null;
         }
@@ -117,6 +128,7 @@ public class TJSFeatureSource extends AbstractFeatureSource {           // not C
                 }
              }  catch (IOException ex) {
                 ex.printStackTrace();
+                LOGGER.severe(ex.getMessage());
             }
         }
         return crs;

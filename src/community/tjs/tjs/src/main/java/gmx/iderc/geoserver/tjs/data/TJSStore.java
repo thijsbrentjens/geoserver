@@ -70,7 +70,7 @@ public class TJSStore extends StoreInfoImpl implements DataStoreInfo, Serializab
     }
 
     public void setDescription(String description) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        
         // TODO: how to deal with this, since it is not about the framework?
         store.getFrameworkInfo().setDescription(description);
     }
@@ -98,7 +98,7 @@ public class TJSStore extends StoreInfoImpl implements DataStoreInfo, Serializab
     }
 
     public void setEnabled(boolean enabled) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        
         store.getFrameworkInfo().setEnabled(enabled);
     }
 
@@ -111,11 +111,11 @@ public class TJSStore extends StoreInfoImpl implements DataStoreInfo, Serializab
         }   catch (Exception e) {
 
         }
-        return wi;  //To change body of implemented methods use File | Settings | File Templates.
+        return wi;  
     }
 
     public void setWorkspace(WorkspaceInfo workspace) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        
     }
 
     public Map<String, Serializable> getConnectionParameters() {
@@ -129,26 +129,26 @@ public class TJSStore extends StoreInfoImpl implements DataStoreInfo, Serializab
 
         }
         // params.put("FrameworkId", store.getFrameworkInfo().getId());
-        return params;  //To change body of implemented methods use File | Settings | File Templates.
+        return params;  
     }
 
     public Throwable getError() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;  
     }
 
     public void setError(Throwable t) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        
     }
 
     public <T> T getAdapter(Class<T> adapterClass, Map<?, ?> hints) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;  
     }
 
     public void accept(CatalogVisitor visitor) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        
     }
 
     public String getId() {
-        return id;  //To change body of implemented methods use File | Settings | File Templates.
+        return id;  
     }
 }

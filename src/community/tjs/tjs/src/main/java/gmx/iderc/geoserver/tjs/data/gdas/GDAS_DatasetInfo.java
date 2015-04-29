@@ -55,6 +55,10 @@ public class GDAS_DatasetInfo extends ReadonlyDatasetInfo {
         }else{
             setDataStore(dataStore);
         }
+        // Thijs: does this HSQLDB_GDAS_Cache class usage cause a memory leak? Should the conn be closed?
+        // In HSQLDB_GDAS_Cache created a method closeConnections:
+        // HSQLDB_GDAS_Cache.closeConnections();
+        // should we use this somehow?
     }
 
     @Override

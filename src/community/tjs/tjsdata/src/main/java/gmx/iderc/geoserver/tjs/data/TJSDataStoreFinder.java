@@ -55,7 +55,7 @@ public final class TJSDataStoreFinder {
     /**
      * The logger for the filter module.
      */
-    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger("org.geotools.data");
+    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger("gmx.iderc.geoserver.tjs.data");
 
     /**
      * The service registry for this manager. Will be initialized only when

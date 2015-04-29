@@ -36,7 +36,7 @@ public class HSQLDB_GDAS_Cache {
         return exist;
     }
 
-    static PreparedStatement insertStatement;
+    static PreparedStatement insertStatement = null;
 
     static private PreparedStatement getInsertPreparedStatement() throws SQLException {
         if (insertStatement == null){
@@ -46,7 +46,7 @@ public class HSQLDB_GDAS_Cache {
         return insertStatement;
     }
 
-    static PreparedStatement updateStatement;
+    static PreparedStatement updateStatement = null;
 
     static private PreparedStatement getUpdatePreparedStatement() throws SQLException {
         if (updateStatement == null){
@@ -64,7 +64,7 @@ public class HSQLDB_GDAS_Cache {
             getInsertPreparedStatement().setTimestamp(2, new Timestamp(now.getTime()));
             getInsertPreparedStatement().setString(3, tableName);
             getInsertPreparedStatement().executeUpdate();
-            getInsertPreparedStatement().close();
+            getInsertPreparedStatement().closeOnCompletion();
             insertStatement=null;
             return true;
         } catch (SQLException e) {
@@ -79,7 +79,7 @@ public class HSQLDB_GDAS_Cache {
             getUpdatePreparedStatement().setTimestamp(1, new Timestamp(now.getTime()));
             getUpdatePreparedStatement().setString(2, url);
             getUpdatePreparedStatement().executeUpdate();
-            getUpdatePreparedStatement().close();
+            getUpdatePreparedStatement().closeOnCompletion();
             updateStatement = null;
             return true;
         } catch (SQLException e) {
@@ -98,7 +98,7 @@ public class HSQLDB_GDAS_Cache {
                 tableName = resultSet.getString(1);
             }
             resultSet.close();
-            statement.close();
+            statement.closeOnCompletion();
             return tableName;
         } catch (SQLException e) {
             e.printStackTrace();  
@@ -115,13 +115,15 @@ public class HSQLDB_GDAS_Cache {
                 // tableName = schemaName+"."+tableName;
             }
             statement.executeUpdate("DELETE FROM " + tableName + ";");
-            statement.close();
+            statement.closeOnCompletion();
             return true;
         } catch (SQLException e) {
             e.printStackTrace();  
         }
         return false;
     }
+
+
 
     static private void initCacheIndex(){
         StringBuilder sqlBuilder = new StringBuilder();
@@ -140,11 +142,36 @@ public class HSQLDB_GDAS_Cache {
             statement.executeUpdate(sql);
             String sqlIndex =  "CREATE INDEX GDAS_URL_IDX ON CACHE(GDAS_URL);";
             statement.executeUpdate(sqlIndex);
-            statement.close();
+            statement.closeOnCompletion();
         } catch (SQLException e) {
             e.printStackTrace();  
         }
 
+    }
+
+    // THijs: do we need a function close, where preparedstatements are closed?
+    static public void closeConnections() {
+       if (insertStatement!=null) {
+          try {
+            insertStatement.close();
+          } catch (SQLException ex) {
+              ex.printStackTrace();
+          }
+       }
+        if (updateStatement!=null) {
+            try {
+                updateStatement.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        if (connection!=null) {
+            try {
+                connection.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
     }
 
     static public Connection getConnection() {
@@ -163,7 +190,6 @@ public class HSQLDB_GDAS_Cache {
             url = url.replace(File.separatorChar, '/');
             connection = DriverManager.getConnection(url, "SA", "");
             connection.setAutoCommit(true);
-
             if (!existCacheTables()){
                 initCacheIndex();
             }
@@ -206,6 +232,7 @@ public class HSQLDB_GDAS_Cache {
         }
         GDAS_Importer_Thread thread = new GDAS_Importer_Thread(gdasType,  tableName, newGdas);
         thread.run();
+        // TODO: Thijs: dispose the thread at some point?
         while (!thread.alldone){
             try {
                 Thread.sleep(1000);
@@ -213,6 +240,7 @@ public class HSQLDB_GDAS_Cache {
                 e.printStackTrace();  
             }
         }
+
         if (newGdas){
             append(url, tableName);
         }else{

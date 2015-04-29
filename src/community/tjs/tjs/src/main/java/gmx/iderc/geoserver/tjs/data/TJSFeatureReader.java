@@ -4,7 +4,12 @@ import com.sun.rowset.CachedRowSetImpl;
 import gmx.iderc.geoserver.tjs.catalog.ColumnInfo;
 import gmx.iderc.geoserver.tjs.catalog.DatasetInfo;
 import gmx.iderc.geoserver.tjs.data.jdbc.JDBC_TJSDatasource;
-import org.apache.log4j.Logger;
+
+// GeoServer logging
+import java.util.logging.Logger;
+import java.util.logging.Level;
+import org.geotools.util.logging.Logging;
+
 import org.geotools.data.DataStore;
 import org.geotools.data.FeatureReader;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -28,6 +33,8 @@ import java.util.NoSuchElementException;
  * To change this template use File | Settings | File Templates.
  */
 public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature> {
+
+    static final Logger LOGGER = Logging.getLogger("gmx.iderc.geoserver.tjs.data.TJSFeatureReader");
 
     FeatureReader<SimpleFeatureType, SimpleFeature> featureReader;
     DatasetInfo datasetInfo;
@@ -53,7 +60,7 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
                     }
                     absRow = index.get(keyValue);
                 }  catch (Exception ex){
-                    // Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
+                    LOGGER.info(ex.getMessage());
                 }
                 if (absRow >= 0) {
                     if (rst.absolute(absRow)) {
@@ -64,9 +71,9 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
                     }
                 }
             } catch (SQLException ex) {
-                Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
+                LOGGER.warning(ex.getMessage());
             }  catch (Exception ex) {
-                Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
+                LOGGER.warning(ex.getMessage());
             }
         }
         return null;
@@ -100,7 +107,7 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
             remote.close();
             indexRowSet();
         } catch (SQLException ex) {
-            Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
+            LOGGER.log(Level.WARNING, " TJSFeatureReader constructor --> " + ex.getMessage());
         }
     }
 
@@ -113,7 +120,8 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         try {
             rst.close();
         } catch (SQLException ex) {
-            Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
+
+            LOGGER.log(Level.WARNING, "Exception in closing TJSFeatureReader --> " + ex.getMessage());
         }
     }
 
@@ -160,15 +168,15 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         }
 
         if (!match) {
-            Logger.getLogger(TJSFeatureReader.class).info("We don't have an object match for " + wfsFeature.getID() + ", let's continue with the next feature.");
+            LOGGER.info("We don't have an object match for " + wfsFeature.getID() + ", let's continue with the next feature.");
         }
 
         try {
             ft = featureBuilder.buildFeature(wfsFeature.getID());
-            Logger.getLogger(TJSFeatureReader.class).debug("We have a feature " + ft.getID());
+            LOGGER.info("We have a feature " + ft.getID());
             return ft;
         } catch (Exception ex) {
-            Logger.getLogger(TJSFeatureReader.class).error(ex.getMessage());
+            LOGGER.warning(ex.getMessage());
         }
 
         return ft;

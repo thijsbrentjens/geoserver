@@ -8,6 +8,7 @@ package gmx.iderc.geoserver.tjs.data;
 import org.apache.commons.lang.ArrayUtils;
 import org.geotools.data.DefaultServiceInfo;
 import org.geotools.data.ServiceInfo;
+import org.geotools.util.logging.Logging;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +19,8 @@ import java.util.logging.Logger;
  * @author root
  */
 public abstract class TJSAbstractDataStore implements TJSDataStore {
+
+    static final Logger LOGGER = Logging.getLogger("gmx.iderc.geoserver.tjs.data");
 
     protected TJSDataAccessFactory dataStoreFactory;
     HashMap<String, TJSDatasource> tjsDatasources = new HashMap<String, TJSDatasource>();
@@ -73,7 +76,7 @@ public abstract class TJSAbstractDataStore implements TJSDataStore {
                     return dataSource;
                 }
             } catch (Exception ex) {
-                Logger.getLogger(TJSDatasource.class.getName()).log(Level.SEVERE, ex.getMessage());
+                LOGGER.log(Level.SEVERE, ex.getMessage());
             }
         }
         return null;

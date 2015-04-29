@@ -8,6 +8,7 @@ package gmx.iderc.geoserver.tjs.data.jdbc;
 import com.sun.rowset.CachedRowSetImpl;
 import gmx.iderc.geoserver.tjs.data.TJSDatasource;
 import org.apache.commons.dbcp.BasicDataSource;
+import org.geotools.util.logging.Logging;
 import org.opengis.filter.Filter;
 
 import javax.sql.RowSet;
@@ -25,6 +26,8 @@ import java.util.logging.Logger;
  * @author root
  */
 public class JDBC_TJSDatasource implements TJSDatasource {
+
+    static final Logger LOGGER = Logging.getLogger("gmx.iderc.geoserver.tjs.data.jdbc");
 
     BasicDataSource dataSource;
     Map params;
@@ -45,9 +48,9 @@ public class JDBC_TJSDatasource implements TJSDatasource {
         try {
             connection = dataSource.getConnection();
         } catch (Exception error) {
-            Logger.getLogger(JDBC_TJSDatasource.class.getName(), error.getMessage());
+            LOGGER.severe(error.getMessage());
+            closeConnection();
         }
-
         return connection;
     }
 
@@ -57,7 +60,7 @@ public class JDBC_TJSDatasource implements TJSDatasource {
                 connection.close();
                 connection = null;
             } catch (Exception error) {
-                Logger.getLogger(JDBC_TJSDatasource.class.getName(), error.getMessage());
+                LOGGER.log(Level.SEVERE, null, error.getMessage());
             }
         }
     }
@@ -68,10 +71,12 @@ public class JDBC_TJSDatasource implements TJSDatasource {
             cachedRowSet.setCommand(getSQL());
             cachedRowSet.execute(getConnection());
             // Thijs Brentjens: close the connection to avoid blocking other Joins (because maxconnections was reached)
-            closeConnection();
+            // closeConnection();
             return cachedRowSet;
         } catch (IOException ex) {
-            Logger.getLogger(JDBC_TJSDatasource.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
+        }   finally {
+            closeConnection();
         }
         return null;
     }
@@ -113,7 +118,7 @@ public class JDBC_TJSDatasource implements TJSDatasource {
             }
             fields.close();
         } catch (SQLException ex) {
-            Logger.getLogger(JDBC_TJSDataStore.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
         return fieldList.toArray(new String[fieldList.size()]);
     }
@@ -123,7 +128,7 @@ public class JDBC_TJSDatasource implements TJSDatasource {
         try {
            dsName = (String) JDBC_TJSDataStoreFactory.DATASOURCENAME.lookUp(params);
         }  catch (Exception e) {
-            Logger.getLogger(JDBC_TJSDatasource.class.getName(), e.getMessage());
+            LOGGER.severe(e.getMessage());
         }
         return "SELECT * FROM " + dsName;
     }

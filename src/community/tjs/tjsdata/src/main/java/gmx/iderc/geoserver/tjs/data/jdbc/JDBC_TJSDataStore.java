@@ -7,6 +7,7 @@ package gmx.iderc.geoserver.tjs.data.jdbc;
 import gmx.iderc.geoserver.tjs.data.TJSAbstractDataStore;
 import gmx.iderc.geoserver.tjs.data.TJSDatasource;
 import org.apache.commons.dbcp.BasicDataSource;
+import org.geotools.util.logging.Logging;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -21,6 +22,8 @@ import java.util.logging.Logger;
  * @author root
  */
 public abstract class JDBC_TJSDataStore extends TJSAbstractDataStore {
+
+    static final Logger LOGGER = Logging.getLogger("gmx.iderc.geoserver.tjs.data.jdbc");
 
     Map params;
     BasicDataSource dataSource;
@@ -43,7 +46,7 @@ public abstract class JDBC_TJSDataStore extends TJSAbstractDataStore {
                 getConnection();
             }
         } catch (IOException ex) {
-            Logger.getLogger(JDBC_TJSDataStore.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
 
     }
@@ -51,11 +54,12 @@ public abstract class JDBC_TJSDataStore extends TJSAbstractDataStore {
     private Connection getConnection() {
         if (connection != null) {
             return connection;
-        }
-        try {
-            connection = dataSource.getConnection();
-        } catch (Exception error) {
-            Logger.getLogger(JDBC_TJSDataStore.class.getName(), error.getMessage());
+        } else {
+            try {
+                connection = dataSource.getConnection();
+            } catch (Exception error) {
+                LOGGER.log(Level.SEVERE, null, error);
+            }
         }
         return connection;
     }
@@ -88,13 +92,13 @@ public abstract class JDBC_TJSDataStore extends TJSAbstractDataStore {
             }
             tables.close();
         } catch (SQLException ex) {
-            Logger.getLogger(JDBC_TJSDataStore.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
         finally {
             try {
                 tables.close();
             }catch (SQLException ex) {
-                Logger.getLogger(JDBC_TJSDataStore.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
         }
         return tableList.toArray(new String[tableList.size()]);
@@ -113,7 +117,7 @@ public abstract class JDBC_TJSDataStore extends TJSAbstractDataStore {
                 params.put(JDBC_TJSDataStoreFactory.DATASOURCENAME.key, name);
             }
         } catch (Exception ex) {
-            Logger.getLogger(JDBC_TJSDataStore.class.getName()).log(Level.WARNING, null, ex);
+            LOGGER.log(Level.WARNING, null, ex);
             params.put(JDBC_TJSDataStoreFactory.DATASOURCENAME.key, name);
         }
         return super.getDatasource(name, params);

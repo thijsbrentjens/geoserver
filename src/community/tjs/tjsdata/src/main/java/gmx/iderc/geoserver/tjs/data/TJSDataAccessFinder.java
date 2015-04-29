@@ -56,7 +56,7 @@ public final class TJSDataAccessFinder {
      * The logger for the filter module.
      */
     protected static final Logger LOGGER = org.geotools.util.logging.Logging
-                                                   .getLogger("org.geotools.data");
+                                                   .getLogger("gmx.iderc.geoserver.tjs.data");
 
     /**
      * The service registry for this manager. Will be initialized only when
@@ -110,7 +110,7 @@ public final class TJSDataAccessFinder {
                 try {
                     isAvailable = fac.isAvailable();
                 } catch (Throwable t) {
-                    LOGGER.log(Level.WARNING, "Difficulity checking if " + fac.getDisplayName()
+                    LOGGER.log(Level.WARNING, "Difficulty checking if " + fac.getDisplayName()
                                                       + " is available:" + t, t);
                     // Protect against DataStores that don't carefully code
                     // isAvailable
@@ -140,7 +140,7 @@ public final class TJSDataAccessFinder {
     }
 
     /**
-     * Finds all implemtaions of DataAccessFactory which have registered using
+     * Finds all implementations of DataAccessFactory which have registered using
      * the services mechanism, regardless weather it has the appropriate
      * libraries on the classpath.
      *

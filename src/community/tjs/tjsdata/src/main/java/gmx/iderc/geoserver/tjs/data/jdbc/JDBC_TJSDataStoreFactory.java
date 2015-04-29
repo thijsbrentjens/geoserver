@@ -74,7 +74,7 @@ public abstract class JDBC_TJSDataStoreFactory extends AbstractTJSDataStoreFacto
      * Maximum number of connections in the connection pool
      */
     public static final Param MAXCONN = new Param("max connections", Integer.class,
-                                                         "maximum number of open connections", false, new Integer(20));
+                                                         "maximum number of open connections", false, new Integer(10));
 
     /**
      * Minimum number of connections in the connection pool
@@ -92,7 +92,7 @@ public abstract class JDBC_TJSDataStoreFactory extends AbstractTJSDataStoreFacto
      * Maximum amount of time the pool will wait when trying to grab a new connection *
      */
     public static final Param MAXWAIT = new Param("Connection timeout", Integer.class,
-                                                         "number of seconds the connection pool will wait before timing out attempting to get a new connection (default, 10 seconds)", false, 10);
+                                                         "number of seconds the connection pool will wait before timing out attempting to get a new connection (default, 20 seconds)", false, 20);
 
     @Override
     public String getDisplayName() {

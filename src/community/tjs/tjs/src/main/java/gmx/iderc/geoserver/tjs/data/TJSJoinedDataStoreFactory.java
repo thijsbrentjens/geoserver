@@ -6,6 +6,7 @@ import gmx.iderc.geoserver.tjs.catalog.TJSCatalog;
 
 import org.geoserver.catalog.FeatureTypeInfo;
 import org.geotools.data.*;
+import org.geotools.util.logging.Logging;
 
 import java.awt.*;
 import java.io.IOException;
@@ -28,6 +29,8 @@ import java.util.logging.Logger;
 // and this class is for JoinedData
 
 public class TJSJoinedDataStoreFactory implements DataStoreFactorySpi {
+
+    static final Logger LOGGER = Logging.getLogger("gmx.iderc.geoserver.tjs.data");
 
     public static final Param FRAMEWORKID = new Param("FrameworkId", String.class,
             "FrameworkId of TJS Framework", true );

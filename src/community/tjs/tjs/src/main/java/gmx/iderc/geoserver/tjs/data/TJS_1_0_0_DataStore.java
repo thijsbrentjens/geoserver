@@ -8,6 +8,7 @@ import org.geotools.data.*;
 import org.geotools.data.store.ContentEntry;
 
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.util.logging.Logging;
 import org.opengis.feature.type.Name;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Created with IntelliJ IDEA.
@@ -25,6 +27,9 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class TJS_1_0_0_DataStore extends AbstractDataStore {        // AbstractDataStore or ContentDataStore?
+
+    static final Logger LOGGER = Logging.getLogger("gmx.iderc.geoserver.tjs.data");
+
     // WFSDataStore wfsDataStore;
     DataStore featureDataStore;
     FrameworkInfo frameworkInfo;
