@@ -442,6 +442,8 @@ public class ExecuteTest extends WPSTestSupport {
                  "</wps:ResponseForm>" + 
                "</wps:Execute>";
         
+        // System.out.println(postAsServletResponse("wps", xml).getOutputStreamContent());
+
         Document d = postAsDOM( "wps", xml );
         // print(d);
         checkValidationErrors(d);
@@ -1015,13 +1017,13 @@ public class ExecuteTest extends WPSTestSupport {
         Document dom = postAsDOM("wfs", request);
         String statusLocation = getStatusLocation(dom);
 
-        MonkeyProcess.progress("chained-monkey", 10f, false);
+        MonkeyProcess.progress("chained-monkey", 10f, true);
         dom = getAsDOM(statusLocation);
         // print(dom);
         assertXpathExists("//wps:ProcessStarted", dom);
         assertXpathEvaluatesTo("3", "//wps:ProcessStarted/@percentCompleted", dom);
 
-        MonkeyProcess.progress("chained-monkey", 50f, false);
+        MonkeyProcess.progress("chained-monkey", 50f, true);
         dom = getAsDOM(statusLocation);
         // print(dom);
         assertXpathExists("//wps:ProcessStarted", dom);

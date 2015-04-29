@@ -102,6 +102,12 @@
    </dependency>
    <dependency>
     <groupId>org.geoserver</groupId>
+    <artifactId>gs-platform</artifactId>
+    <version>${gs.version}</version>
+    <classifier>tests</classifier>
+   </dependency>
+   <dependency>
+    <groupId>org.geoserver</groupId>
     <artifactId>gs-ows</artifactId>
     <version>${gs.version}</version>
    </dependency>
@@ -579,6 +585,14 @@
     <groupId>org.geowebcache</groupId>
     <artifactId>gwc-diskquota-jdbc</artifactId>
     <version>${gwc.version}</version>
+   </dependency>
+
+   <!-- ORACLE -->
+   <!-- Download and install into your own repo -->
+   <dependency>
+     <groupId>com.oracle</groupId>
+     <artifactId>ojdbc7</artifactId>
+     <version>12.1.0.2</version>
    </dependency>
 
    <dependency>
@@ -1576,7 +1590,7 @@
   <poi.version>3.8</poi.version>
   <wicket.version>1.4.12</wicket.version>
   <ant.version>1.8.4</ant.version>
-  <imageio-ext.version>1.1.10</imageio-ext.version>
+  <imageio-ext.version>1.1.11</imageio-ext.version>
   <java.awt.headless>true</java.awt.headless>
   <jvm.opts></jvm.opts>
   <jalopy.phase>disabled</jalopy.phase>
