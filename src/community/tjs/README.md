@@ -83,6 +83,7 @@ There, add the TJS-projects to the Classpath, as projects:
 * tjs-web
 * xsd-tjs
 
+4. Running Geoserver with TJS should work now. NOTE: at this moment, there seems to be an issue using Eclipse's Run functionality, especially with the data dir configuration for TJS.
 
 
 
