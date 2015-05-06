@@ -57,3 +57,34 @@ mvn clean install -DskipTests
 
 Note: tests will probably fail at the moment because of Postgres connections in some of the tests. Skipping the tests will help for now.
 
+Using Eclipse
+=====================
+To use the TJS plugin in Eclipse, follow the general guidelines of GeoServer but don't import the projects in Eclipse yet, http://docs.geoserver.org/2.6.x/en/developer/quickstart/index.html
+
+Before importing the projects, you need to configure the TJS plugin for Eclipse as well:
+
+To add the TJS plugin:
+
+1. with a command line, setup the Eclipse project for TJS:
+
+cd src/community/tjs/
+
+mvn eclipse:eclipse
+
+2. Now import the project Geoserver from file, as described http://docs.geoserver.org/2.6.x/en/developer/quickstart/index.html. You should see 
+
+3. Run configuration:
+After the first Run configuration with Eclipse, the TJS plugin needs to be added manually to the Run configuration. You can do this by going to Run > Run configurations...
+There, add the TJS-projects to the Classpath, as projects:
+
+* net.opengis.tjs
+* tjs
+* tjsdata
+* tjs-web
+* xsd-tjs
+
+
+
+
+
+

@@ -15,7 +15,7 @@ import java.util.logging.Logger;
  */
 public class NewTJSDataPageTest extends TJSWicketTestSupport {
 
-    @Override
+    
     protected void setUpInternal() throws Exception {
         try {
             login();

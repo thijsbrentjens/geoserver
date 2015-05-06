@@ -26,7 +26,7 @@ public abstract class TJSWicketTestSupport extends GeoServerWicketTestSupport {
     TJSCatalog tjsCatalog;
     public static QName PROVINCIAS = new QName(MockData.CITE_URI, "Provincias", MockData.CITE_PREFIX);
 
-    @Override
+    
     public void oneTimeSetUp() throws Exception {
         //super.oneTimeSetUp();
         super.doSetup();
@@ -37,7 +37,7 @@ public abstract class TJSWicketTestSupport extends GeoServerWicketTestSupport {
         tjsCatalog.save();
     }
 
-    @Override
+    
     protected void populateDataDirectory(MockData dataDirectory) throws Exception {
         //super.populateDataDirectory(dataDirectory);
         URL resUrl = TJSTestSupport.class.getResource("Provincias.properties");
