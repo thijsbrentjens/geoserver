@@ -139,12 +139,12 @@ public interface TJSInfo extends ServiceInfo {
     void setCanonicalSchemaLocation(boolean canonicalSchemaLocation);
 
     /**
-     * The level of service provided by the WFS.
+     * The level of service provided by the TJS.
      */
     ServiceLevel getServiceLevel();
 
     /**
-     * Sets the level of service provided by the WFS.
+     * Sets the level of service provided by the TJS.
      */
     void setServiceLevel(ServiceLevel serviceLevel);
 

@@ -28,7 +28,7 @@ import java.util.logging.Logger;
  */
 public class TJS_1_0_0_DataStore extends AbstractDataStore {        // AbstractDataStore or ContentDataStore?
 
-    static final Logger LOGGER = Logging.getLogger("gmx.iderc.geoserver.tjs.data");
+    static final Logger LOGGER = Logging.getLogger("gmx.iderc.geoserver.tjs.data.TJS_1_0_0_DataStore");
 
     // WFSDataStore wfsDataStore;
     DataStore featureDataStore;
@@ -36,6 +36,8 @@ public class TJS_1_0_0_DataStore extends AbstractDataStore {        // AbstractD
     TJSCatalog catalog;
     HashMap<String, SimpleFeatureType> storeTypeNames = new HashMap<String, SimpleFeatureType>();
 
+    // HashMap<String, FeatureReader<SimpleFeatureType, SimpleFeature>> featureReaders = new HashMap<String, FeatureReader<SimpleFeatureType, SimpleFeature>>();
+    
     // This datastore does not allow writing features
     protected boolean isWritable = false;
 
@@ -131,12 +133,27 @@ public class TJS_1_0_0_DataStore extends AbstractDataStore {        // AbstractD
 
     // Thijs: was protected, but need it elsewhere.
     // Is this appropriate?  Should this be implemented somewhere else?
+    // TODO: create a hashmap, containing cached featurereaders for each typeName?
+    
+    
+    
     public FeatureReader<SimpleFeatureType, SimpleFeature> getFeatureReader(String typeName)
             throws IOException {
-        String wfsTypeName = frameworkInfo.getFeatureType().getNativeName();
+    	
+    	/* if (featureReaders.containsKey(typeName)) {
+        	// try to connect
+        	FeatureReader<SimpleFeatureType, SimpleFeature> fr = featureReaders.get(typeName);
+        	if (fr != null) {
+	        	LOGGER.severe("featurereader for: " + typeName);
+	        	LOGGER.severe("Using cached featureReader... ");
+	        	return featureReaders.get(typeName);	        	
+        	}
+        } */
+        String wfsTypeName = frameworkInfo.getFeatureType().getNativeName();        
         FeatureReader<SimpleFeatureType, SimpleFeature> wfsFeatureReader = featureDataStore.getFeatureReader(new DefaultQuery(wfsTypeName), new DefaultTransaction());
         DatasetInfo datasetInfo = catalog.getDatasetByFramework(frameworkInfo.getId(), typeName);
         TJSFeatureReader featureReader =  new TJSFeatureReader(getSchema(typeName), wfsFeatureReader, datasetInfo);
+        // featureReaders.put(typeName, featureReader);
         return featureReader;
     }
 

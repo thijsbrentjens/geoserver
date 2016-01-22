@@ -24,7 +24,10 @@
     <!-- =========================================================== -->
     <groupId>org.geotools.xsd</groupId>
     <artifactId>gt-xsd-tjs</artifactId>
+    <!--
     <version>12-SNAPSHOT</version>
+    -->
+    <version>13.3</version>
     <packaging>jar</packaging>
     <name>TJS XML Support(xsd-tjs)</name>
 
@@ -56,8 +59,8 @@
     <snapshots>
     <enabled>true</enabled>
     </snapshots>
-  </repository> 
-  
+  </repository>
+
   <repository>
     <id>osgeo</id>
     <name>Open Source Geospatial Foundation Repository</name>
@@ -112,6 +115,7 @@
     <enabled>false</enabled>
    </releases>
   </pluginRepository>
+
  </pluginRepositories>
 
     <!-- =========================================================== -->
@@ -149,11 +153,11 @@
             <artifactId>gt-xsd-ows</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!--dependency>
+        <dependency>
             <groupId>org.geotools.maven</groupId>
             <artifactId>xmlcodegen</artifactId>
-            <version>8.4</version>
-        </dependency-->
+            <version>13.3</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -238,5 +242,3 @@
         </plugins>
     </build>
 </project>
-
-

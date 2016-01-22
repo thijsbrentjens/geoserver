@@ -1,9 +1,9 @@
 Example data for TJS
 ====================
 
-If the sample data of Geoserver is available (most notable the states of the USA data), you could try the TJS by following these steps:
+If the sample data of Geoserver is available (most notably the states of the USA data), you could try the TJS by following these steps:
 
-1) add the directory "gmxtjs" to the geoserver data-dir. This directory contains an example confirguration for the states layer as TJS SpatialFramework
+1) add the directory "gmxtjs" to the geoserver data-dir. This directory contains an example configruration for the states layer as TJS SpatialFramework
 2) (re)start geoserver
 
 After reloading, the TJS should be available. 
@@ -23,3 +23,7 @@ If you have GDAS encoded data (for example some statistics, without geometry, in
 This GDAS format is specifically designed for TJS (but could be used for other things as well). If you have a CSV file, you need to convert that to GDAS.
 
 How to do this, is described later. 
+
+JoinData request demo:
+
+http://localhost:8080/geoserver/tjs?request=JoinData&FrameworkURI=http://www.openplans.org/topp/StatesUSA&GetdataURL=http://localhost:8080/geoserver/www/GDAS-sampledata.xml

@@ -168,9 +168,11 @@ public abstract class JoinDataTransformer extends TransformerBase {
     }
 
     /**
-     * Transformer for wfs 1.0 capabilities document.
-     *
-     * @author Justin Deoliveira, The Open Planning Project
+     * Transformer for TJS JoinData document.
+     * 
+     * @author GeoCuba
+     * @author Thijs Brentjens, Brentjens Geo-ICT
+     * 
      */
     public static class TJS1_0 extends JoinDataTransformer {
 
@@ -193,7 +195,6 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     if (owsRequest != null){
                         return owsRequest.getHttpRequest().getRequestURL().toString();
                     }else{
-                        //ocurre cuando se realizan los test  y en el AutoJoin
                         return tjs.getTjsServerBaseURL();
                     }
                 } catch (Exception ex) {
@@ -222,7 +223,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
             HashMap<String, WMSStoreInfo> layerStoreMap = new HashMap<String, WMSStoreInfo>();
 
             private Catalog getGeoserverCatalog() {
-                if (geoserverCatalog == null) {
+                if (geoserverCatalog == null) { 
                     geoserverCatalog = tjs.getGeoServer().getCatalog();
                 }
                 return geoserverCatalog;
@@ -276,20 +277,12 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         start("JoinedOutputs");
 
                         // Thijs: create a WMS and WFS mechanism here. For output in all kinds of formats.
-
                         // TODO: refactor for new stylename? Causes an stack overflow if handled in the handleMapStyling alone
                         // Needs some more research
                         setUpWFSandWMSMechanism(frameworkInfo, gdas_datasetInfo, newStyleName);
 
                         end("JoinedOutputs");
-
-                        // for WMS ?
-                        // Thijs: this seems not longer necessary for the WMS GetFeatureInfo results
-                        // we could skip the interceptor?
-                        /* makeJoinedMapByGetDataURL(request.getAttributeData().getGetDataURL(),
-                                                         gdas.getFramework().getFrameworkURI(),
-                                                         gdas.getFramework().getDataset().getDatasetURI());
-                        /* */
+                        
                     } catch (ParserConfigurationException ex) {
                         LOGGER.log(Level.SEVERE, ex.getMessage());
                     } catch (SAXException ex) {
@@ -451,6 +444,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         List<FeatureTypeInfo> featureTypes = gsCatalog.getResourcesByStore(dsInfoNew, FeatureTypeInfo.class);
                         // newFeatureTypeName was: datasetInfo.getName()
                         FeatureTypeInfo featureTypeInfo = getFeatureTypeInfoIfExists(featureTypes, newFeatureTypeName);
+
                         if (featureTypeInfo == null) {
                             builder.setStore(tempTJSStore);
 
@@ -522,6 +516,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                 } catch (Exception ex) {
                     // TODO:proper logging
                     // System.out.println("Error in creating WFS and WMS mechanims");
+                	LOGGER.severe(ex.getMessage());
                     ex.printStackTrace();
                 }
 
@@ -565,7 +560,6 @@ public abstract class JoinDataTransformer extends TransformerBase {
                 start("JoinedOutputs");
 
                 // Thijs: setupWMSMechanism is deprecated, with the new setup of WFS and WMS at once
-
                 // setUpWMSMechanism(frameworkInfo, getDataXML.getDatasetURI());
 
                 end("JoinedOutputs");
@@ -685,16 +679,27 @@ public abstract class JoinDataTransformer extends TransformerBase {
                 return base;
             }
 
-            private String getLocalWMSUrl(String workswpace) {
+            private String replaceLastIgnoreCase(String string, String from, String to) {
+                int lastIndex = string.toUpperCase().lastIndexOf(from.toUpperCase());
+                if (lastIndex < 0) return string;
+                String tail = string.toUpperCase().substring(lastIndex).replaceFirst(from.toUpperCase(), to);
+                return string.substring(0, lastIndex) + tail;
+            }
+
+            private String getLocalWMSUrl(String workspace) {
                 String baseURL = getBaseURL();
                 String wms;
-                if (baseURL.toUpperCase().endsWith("OWS")){
-                    wms = replaceIgnoreCase(baseURL,  "OWS", workswpace + "/wms");
+                // TODO: this is plain wrong, should only be at the end of the URL!
+                // so not replaceIgnoreCase
+                if (baseURL.toUpperCase().endsWith("/OWS")){
+                    wms = replaceLastIgnoreCase(baseURL,  "/OWS", "/"+workspace + "/wms");
                 }else{
-                    if (baseURL.toUpperCase().endsWith("TJS")){
-                        wms = replaceIgnoreCase(baseURL,  "TJS", workswpace + "/wms");
+                    if (baseURL.toUpperCase().endsWith("/TJS")){
+                        // TODO: take into account http://tjs !!
+                        // only the last part should be replaced, not all parts
+                        wms = replaceLastIgnoreCase(baseURL,  "/TJS", "/"+workspace + "/wms");
                     }else{
-                        wms = getBaseURL().concat("/"+workswpace + "/wms");
+                        wms = getBaseURL().concat("/"+workspace + "/wms");
                     }
                 }
                 return wms + "?request=GetCapabilities&service=WMS";
@@ -703,11 +708,11 @@ public abstract class JoinDataTransformer extends TransformerBase {
             private String getTempWMSUrl(WorkspaceInfo workspaceInfo) {
                 String baseURL = getBaseURL();
                 String wms;
-                if (baseURL.toUpperCase().endsWith("OWS")){
-                    wms = replaceIgnoreCase(baseURL,  "OWS", TJSExtension.TJS_TEMP_WORKSPACE + "/wms");
+                if (baseURL.toUpperCase().endsWith("/OWS")){
+                    wms = replaceLastIgnoreCase(baseURL,  "/OWS", "/"+TJSExtension.TJS_TEMP_WORKSPACE + "/wms");
                 }else{
-                    if (baseURL.toUpperCase().endsWith("TJS")){
-                        wms = replaceIgnoreCase(baseURL,  "TJS", TJSExtension.TJS_TEMP_WORKSPACE + "/wms");
+                    if (baseURL.toUpperCase().endsWith("/TJS")){
+                        wms = replaceLastIgnoreCase(baseURL,  "/TJS", "/"+TJSExtension.TJS_TEMP_WORKSPACE + "/wms");
                     }else{
                         wms = getBaseURL().concat("/"+TJSExtension.TJS_TEMP_WORKSPACE + "/wms");
                     }
@@ -720,11 +725,11 @@ public abstract class JoinDataTransformer extends TransformerBase {
                 String baseURL = getBaseURL();
                 Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.FINE, "BaseURL for the service: " + baseURL);
                 String wfs;
-                if (baseURL.toUpperCase().endsWith("OWS")){
-                    wfs = replaceIgnoreCase(baseURL,  "OWS", TJSExtension.TJS_TEMP_WORKSPACE + "/wfs");
+                if (baseURL.toUpperCase().endsWith("/OWS")){
+                    wfs = replaceLastIgnoreCase(baseURL,  "/OWS", "/"+TJSExtension.TJS_TEMP_WORKSPACE + "/wfs");
                 }else{
-                    if (baseURL.toUpperCase().endsWith("TJS")){
-                        wfs = replaceIgnoreCase(baseURL,  "TJS", TJSExtension.TJS_TEMP_WORKSPACE + "/wfs");
+                    if (baseURL.toUpperCase().endsWith("/TJS")){
+                        wfs = replaceLastIgnoreCase(baseURL,  "/TJS", "/"+TJSExtension.TJS_TEMP_WORKSPACE + "/wfs");
                     }else{
                         wfs = getBaseURL().concat("/"+TJSExtension.TJS_TEMP_WORKSPACE + "/wfs");
                     }
@@ -783,7 +788,6 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     // CatalogBuilder builder = new CatalogBuilder(getGeoserverCatalog());
 
                     // we have a WFS Datastore already  for the featuretype
-                    // assume it is a wfsDataStore?
                     DataStore featureDataStore = (DataStore) featureTypeInfo.getStore().getDataStore(null);
                     Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.FINE, "Datastore: " + featureDataStore.toString());
 

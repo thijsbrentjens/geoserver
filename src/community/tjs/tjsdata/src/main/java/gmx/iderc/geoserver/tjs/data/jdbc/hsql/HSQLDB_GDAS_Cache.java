@@ -183,6 +183,8 @@ public class HSQLDB_GDAS_Cache {
             Class.forName("org.hsqldb.jdbcDriver");
             String tmpDir = System.getProperty("java.io.tmpdir");
             // TODO: Thijs: or better save the database in the datadir?
+            // tjs.getGeoserver()
+            
             // Thijs: fix the dir by using proper separator
             tmpDir = tmpDir.concat(File.separator).concat("allgdas").concat(File.separator);
             allgdas = new File(tmpDir);
@@ -206,8 +208,8 @@ public class HSQLDB_GDAS_Cache {
         tableName = tableName.replace(".","_");
         // Thijs: shorten the tablename if it is longer than 17 characters. This number is choosen because of the time in millisecons that is added.
         // TODO: determine how to deal with the length of the tablename and if the timestamp in millisecs is needed
-        if (tableName.length() >= 18) {
-            tableName = tableName.substring(0,17);
+        if (tableName.length() >= 16) {
+            tableName = tableName.substring(0,15);
         }
         return tableName;
     }
@@ -227,6 +229,8 @@ public class HSQLDB_GDAS_Cache {
             // Should we include a timestamp or not? I think we shouldn't..
             tableName = tableName.concat(String.valueOf(System.currentTimeMillis()));
             tableName = tableName.toUpperCase();
+            // TODO: add quotes?
+            // tableName="\""+ tableName + "\"";
         }else{
             clearGDAS(tableName);
         }
