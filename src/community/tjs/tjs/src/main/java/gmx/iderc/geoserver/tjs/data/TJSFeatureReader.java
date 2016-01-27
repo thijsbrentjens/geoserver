@@ -41,6 +41,7 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     SimpleFeatureType type;
     CachedRowSetImpl rst;
     TJSDatasource tjsDatasource = null;
+    Boolean caseInsensitive = true;
 
     HashMap<Object, Integer> index = new HashMap<Object, Integer>();
 
@@ -57,6 +58,11 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
                     }
                     if (keyValue instanceof Integer) {
                         keyValue = keyValue.toString();
+                    }
+                    // make it case insensitive?
+                    //
+                    if (caseInsensitive) {
+                        keyValue = keyValue.toString().toUpperCase();
                     }
                     absRow = index.get(keyValue);
                 }  catch (Exception ex){
@@ -82,7 +88,11 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     private void indexRowSet() throws SQLException {
         int keyIndex = rst.findColumn(datasetInfo.getGeoKeyField());
         while (rst.next()) {
-            index.put(rst.getObject(keyIndex), rst.getRow());
+            Object key = rst.getObject(keyIndex);
+            if (caseInsensitive) {
+                key = key.toString().toUpperCase();
+            }
+            index.put(key, rst.getRow());
         }
     }
 
@@ -140,40 +150,42 @@ public class TJSFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         // TODO: decide if no result, then return null and skip the result? Or add all result and provide empty values (as done now)
         boolean match = false;
 
-        // TODO: Thijs Brentjens, for codesprint
         // What if the value is an Integer? cast it?
         for (ColumnInfo column : datasetInfo.getColumns()) {
             // TODO: always to string? Or to the type as defined in the GDAS file?
             // NOTE: also see other classes for createing the GDAS cache where column names are changed
-            /* String columnNameFT = column.getName();
-            if (Character.isDigit(columnNameFT.charAt(0))) {
-                columnNameFT = "_" + columnNameFT;
-            } */
-            // System.out.println("FeatureReader columnname: " + columnNameFT);
             Object newValue = null;
+            String columnName = column.getName();
+            // get a safe column name?
+
             try {
                 if (keyValue != null) {
+                    LOGGER.finer("Column name in featurereader:  " + column.getName());
+                    if (caseInsensitive) {
+                        keyValue = keyValue.toString().toUpperCase();
+                    }
                     newValue = lookup(keyValue, column.getName());
                 }
             } catch (Exception ex) {
                 newValue = "";
             }
             if (newValue == null) {
-                newValue = "";
+                newValue = "";      // this assumes string. But we need to know the type?
             } else {
                 // We do have at least one value, so we can continue building the feature
                 match = true;
             }
-            featureBuilder.set(column.getName(), newValue.toString());
+            // featureBuilder.set(column.getName(), newValue.toString());
+            featureBuilder.set(column.getName(), newValue);
         }
 
         if (!match) {
-            LOGGER.info("We don't have an object match for " + wfsFeature.getID() + ", let's continue with the next feature.");
+            LOGGER.fine("We don't have an object match for " + wfsFeature.getID() + ", let's continue with the next feature.");
         }
 
         try {
             ft = featureBuilder.buildFeature(wfsFeature.getID());
-            LOGGER.info("We have a feature " + ft.getID());
+            LOGGER.fine("We have a feature " + ft.getID());
             return ft;
         } catch (Exception ex) {
             LOGGER.warning(ex.getMessage());

@@ -1,14 +1,10 @@
 package gmx.iderc.geoserver.tjs.data.jdbc.hsql;
 
-import gmx.iderc.geoserver.tjs.data.TJSDataStore;
-import gmx.iderc.geoserver.tjs.data.jdbc.JDBC_TJSDataStoreFactory;
 import gmx.iderc.geoserver.tjs.data.xml.SQLToXSDMapper;
 import net.opengis.tjs10.*;
 import org.eclipse.emf.common.util.EList;
 
-import java.io.IOException;
 import java.sql.*;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -64,12 +60,7 @@ public class GDAS_Importer_Thread extends Thread {
                 // TODO: use the length of the GDAS type.
                 sqlType += " (255)";
             }
-            /* String columnNameFT = attribute.getName();
-            if (Character.isDigit(columnNameFT.charAt(0))) {
-                columnNameFT = "_" + columnNameFT;
-            }
-            System.out.println("set columnname to: " + columnNameFT);    */
-            sqlbuilder.append("\"" + attribute.getName() + "\" " + sqlType);
+            sqlbuilder.append("\"" + getSafeColumnName(attribute.getName()) + "\" " + sqlType);
         }
 
         sqlbuilder.append(");");
@@ -79,10 +70,21 @@ public class GDAS_Importer_Thread extends Thread {
             statement.executeUpdate(sql);
             statement.close();
         } catch (SQLException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
+            System.out.println("Error in creation of GDAS cache table for " + tableName);
             return null;
         }
         return tableName;
+    }
+
+    private String getSafeColumnName(String columnName) {
+        columnName = columnName.toUpperCase();
+        columnName = columnName.replaceAll("[^A-Z0-9_]", "");
+        // TODO: if the columnname already exists, then add a number
+        if (columnName.length() >= 32) {
+            columnName = tableName.substring(0,32);
+        }
+        return columnName;
     }
 
     private PreparedStatement getInsertStatement(GDASType gdasType, String tableName) {
@@ -109,12 +111,8 @@ public class GDAS_Importer_Thread extends Thread {
                 values.append(", ");
             }
             sqlbuilder.append(", ");
-            // TODO: better implementation of safe column names. See class
-            /*String columnNameFT = attribute.getName();
-            if (Character.isDigit(columnNameFT.charAt(0))) {
-                columnNameFT = "_" + columnNameFT;
-            }  */
-            sqlbuilder.append("\"" + attribute.getName() + "\"");
+            // TODO: better implementation of safe column names. See class GDAS_DatasetInfo
+            sqlbuilder.append("\"" + getSafeColumnName(attribute.getName()) + "\"");
             values.append("?");
             hasValue = true;
         }
@@ -128,6 +126,7 @@ public class GDAS_Importer_Thread extends Thread {
             return statement;
         } catch (SQLException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+
         }
         return null;
     }
@@ -149,7 +148,7 @@ public class GDAS_Importer_Thread extends Thread {
                     String value = ((KType) row.getK().get(0)).getValue();
 
                     setValue(frameworkKeyColumn.getType().getLiteral(), preparedStatement,  value, 1);
-//                    preparedStatement.setString(1, value);
+
                     int findex = 1;
                     for (int j = 0; j < row.getV().size(); j++) {
                         ColumnType1 columnType1 = (ColumnType1) columnset.getAttributes().getColumn().get(j);
@@ -161,13 +160,13 @@ public class GDAS_Importer_Thread extends Thread {
                         if (vType.getValue() != null){
                             setValue(columnType1.getType().getLiteral(), preparedStatement,  vType.getValue(), findex);
                         }
-//                        preparedStatement.setString(findex, vType.getValue());
                     }
                     preparedStatement.executeUpdate();
                 }
                 preparedStatement.close();
             } catch (SQLException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                System.out.println("THIJS: error in importGDAS: " + e.getMessage());
             }
         }
         return true;

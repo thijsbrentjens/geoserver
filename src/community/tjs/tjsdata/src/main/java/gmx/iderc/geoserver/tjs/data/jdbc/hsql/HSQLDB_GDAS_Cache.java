@@ -6,11 +6,13 @@ import gmx.iderc.geoserver.tjs.data.xml.SQLToXSDMapper;
 import net.opengis.tjs10.*;
 import org.eclipse.emf.common.util.EList;
 
+
 import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.commons.codec.digest.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -123,8 +125,6 @@ public class HSQLDB_GDAS_Cache {
         return false;
     }
 
-
-
     static private void initCacheIndex(){
         StringBuilder sqlBuilder = new StringBuilder();
         //Crea la tabla donde almacenar el listado de GDAS cargados
@@ -189,6 +189,8 @@ public class HSQLDB_GDAS_Cache {
             tmpDir = tmpDir.concat(File.separator).concat("allgdas").concat(File.separator);
             allgdas = new File(tmpDir);
             String url = "jdbc:hsqldb:file:/" + allgdas.toString();
+            // String url = "jdbc:hsqldb:mem:allgdas";
+
             url = url.replace(File.separatorChar, '/');
             connection = DriverManager.getConnection(url, "SA", "");
             connection.setAutoCommit(true);
@@ -203,13 +205,16 @@ public class HSQLDB_GDAS_Cache {
         return connection;
     }
 
-    static public String createSafeTableName(String tableName){
-        tableName = tableName.replace("-","_");
-        tableName = tableName.replace(".","_");
+    static public String getSafeTableName(String tableName){
+        tableName = tableName.toUpperCase();
+        tableName = tableName.replaceAll("[^A-Z0-9_]", "");
+        // tableName = tableName.replace("-","_");
+        // tableName = tableName.replace(".","_");
         // Thijs: shorten the tablename if it is longer than 17 characters. This number is choosen because of the time in millisecons that is added.
         // TODO: determine how to deal with the length of the tablename and if the timestamp in millisecs is needed
-        if (tableName.length() >= 16) {
-            tableName = tableName.substring(0,15);
+        // replace the timestamp by the id value of the database? this is shorter...
+        if (tableName.length() >= 32) {
+            tableName = tableName.substring(0,32);
         }
         return tableName;
     }
@@ -221,17 +226,25 @@ public class HSQLDB_GDAS_Cache {
             // Thijs: should there be a schema "PUBLIC." in front here or not?
             // Let's try without it
             // tableName = schemaName+gdasType.getFramework().getDataset().getTitle();
-            // TODO: Thijs: document how the filename is determined: use the Title of the GDAS-file
+            // TODO: Thijs: document how the filename is determined: use the Title of the GDAS-file + part of the md5 hash of the URL
             tableName = gdasType.getFramework().getDataset().getTitle();
             // replace "-" by "_" in the table_name
             // make the table name no longer than X chars
-            tableName = createSafeTableName(tableName);
+            tableName = getSafeTableName(tableName);
             // Should we include a timestamp or not? I think we shouldn't..
-            tableName = tableName.concat(String.valueOf(System.currentTimeMillis()));
+            // tableName = tableName.concat(String.valueOf(System.currentTimeMillis()));
             tableName = tableName.toUpperCase();
-            // TODO: add quotes?
-            // tableName="\""+ tableName + "\"";
-        }else{
+            // md5 is too long probably
+            // get the first 6 chars of md5 -> very small chance (1 in 1 million?) that the same layer is found in combination with the tablename
+            // String urlHash = DigestUtils.md5Hex( url );
+            // tableName.substring(0,31);
+            // max 24 chars of the tablename+
+            tableName = tableName.substring(0, Math.min(tableName.length(), 25)) + "_";
+            String t = String.valueOf(System.currentTimeMillis());
+            // t = DigestUtils.md5Hex( url );
+            tableName = tableName.concat(t.substring(t.length()-6) );
+        }else {
+            tableName = getSafeTableName(tableName);
             clearGDAS(tableName);
         }
         GDAS_Importer_Thread thread = new GDAS_Importer_Thread(gdasType,  tableName, newGdas);
@@ -239,7 +252,7 @@ public class HSQLDB_GDAS_Cache {
         // TODO: Thijs: dispose the thread at some point?
         while (!thread.alldone){
             try {
-                Thread.sleep(1000);
+                Thread.sleep(250);
             } catch (InterruptedException e) {
                 e.printStackTrace();  
             }
@@ -278,5 +291,6 @@ public class HSQLDB_GDAS_Cache {
         }
         return (HSQLDB_TJSDataStore) dataStore;
     }
+
 
 }

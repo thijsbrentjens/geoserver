@@ -28,6 +28,17 @@ public class GDAS_ColumnInfo extends ReadonlyColumnInfo {
         return columnType.getName();  //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    public String getSafeColumnName() {
+        String columnName = getName().toUpperCase();
+        columnName = columnName.replaceAll("[^A-Z0-9_]", "");
+        // and cut off ythe length?
+        // TODO: if the columnname already exists, then add a number
+        if (columnName.length() >= 32) {
+            columnName = columnName.substring(0,31);
+        }
+        return columnName;
+    }
+
     @Override
     public String getType() {
         return columnType.getType().getLiteral();

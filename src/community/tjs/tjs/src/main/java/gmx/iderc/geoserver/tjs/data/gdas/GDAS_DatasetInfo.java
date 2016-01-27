@@ -135,10 +135,21 @@ public class GDAS_DatasetInfo extends ReadonlyDatasetInfo {
             for (int index = 0; index < gdasType.getFramework().getDataset().getColumnset().getAttributes().getColumn().size(); index++){
                 ColumnType1 column = (ColumnType1)gdasType.getFramework().getDataset().getColumnset().getAttributes().getColumn().get(index);
                 // if the columnName starts with a number, add a character in front for XML encoding. XML does not allow numbrs as first chracter for an element name
-                columns.put(column.getName(), new GDAS_ColumnInfo(column));
+                columns.put(getSafeColumnName(column.getName()), new GDAS_ColumnInfo(column));
             }
         }
         return new ArrayList<ColumnInfo>(columns.values());
+    }
+
+    public String getSafeColumnName(String columnName) {
+        columnName =   columnName.toUpperCase();
+        columnName = columnName.replaceAll("[^A-Z0-9_]", "");
+        // and cut off ythe length?
+        // TODO: if the columnname already exists, then add a number
+        if (columnName.length() >= 32) {
+            columnName = columnName.substring(0,31);
+        }
+        return columnName;
     }
 
     @Override

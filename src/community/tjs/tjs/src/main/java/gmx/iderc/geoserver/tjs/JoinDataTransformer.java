@@ -405,10 +405,17 @@ public abstract class JoinDataTransformer extends TransformerBase {
 
                     // datasetInfo.getName()
                     String newFeatureTypeName = datasetInfo.getName();
+                    System.out.println("THIJS: newFeatureTypeName " + newFeatureTypeName);
                     // Catalog gsCatalog = getGeoserverCatalog();
-
-                    if (catalog.getDatasetByUri(datasetInfo.getDatasetUri()) != null ){
+                    System.out.println("THIJS: datasetInfo.getDatasetUri() " + datasetInfo.getDatasetUri());
+                    System.out.println("THIJS: datasetInfo.getDataStore().getId(); " + datasetInfo.getDataStore().getId());
+                    // already existing layers in datsetore:
+                    Boolean ftExists = catalog.getDataset(datasetInfo.getDataStore().getId(), newFeatureTypeName) != null;
+                    System.out.println("THIJS: ftExists; " + ftExists.toString());
+                    if (catalog.getDatasetByUri(datasetInfo.getDatasetUri()) != null && ftExists){
                         // TODO: check if layer really exists, otherwise, remove it?
+                        // TODO: getDatasetByURI: the datasetURI is the same!!
+                        // also check if a featuretype already exists?
 
                     } else {
                         // TODO: what if the datasetInfo is already there?
