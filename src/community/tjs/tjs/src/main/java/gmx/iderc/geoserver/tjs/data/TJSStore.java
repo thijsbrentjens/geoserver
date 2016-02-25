@@ -70,7 +70,7 @@ public class TJSStore extends StoreInfoImpl implements DataStoreInfo, Serializab
     }
 
     public void setDescription(String description) {
-        
+
         // TODO: how to deal with this, since it is not about the framework?
         store.getFrameworkInfo().setDescription(description);
     }
@@ -98,7 +98,7 @@ public class TJSStore extends StoreInfoImpl implements DataStoreInfo, Serializab
     }
 
     public void setEnabled(boolean enabled) {
-        
+
         store.getFrameworkInfo().setEnabled(enabled);
     }
 
@@ -111,11 +111,11 @@ public class TJSStore extends StoreInfoImpl implements DataStoreInfo, Serializab
         }   catch (Exception e) {
 
         }
-        return wi;  
+        return wi;
     }
 
     public void setWorkspace(WorkspaceInfo workspace) {
-        
+
     }
 
     public Map<String, Serializable> getConnectionParameters() {
@@ -129,26 +129,26 @@ public class TJSStore extends StoreInfoImpl implements DataStoreInfo, Serializab
 
         }
         // params.put("FrameworkId", store.getFrameworkInfo().getId());
-        return params;  
+        return params;
     }
 
     public Throwable getError() {
-        return null;  
+        return null;
     }
 
     public void setError(Throwable t) {
-        
+
     }
 
     public <T> T getAdapter(Class<T> adapterClass, Map<?, ?> hints) {
-        return null;  
+        return null;
     }
 
     public void accept(CatalogVisitor visitor) {
-        
+
     }
 
     public String getId() {
-        return id;  
+        return id;
     }
 }

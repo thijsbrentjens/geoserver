@@ -82,7 +82,7 @@ public class GDAS_Importer_Thread extends Thread {
         columnName = columnName.replaceAll("[^A-Z0-9_]", "");
         // TODO: if the columnname already exists, then add a number
         if (columnName.length() >= 32) {
-            columnName = tableName.substring(0,32);
+            columnName = columnName.substring(0,32);
         }
         return columnName;
     }
@@ -166,7 +166,6 @@ public class GDAS_Importer_Thread extends Thread {
                 preparedStatement.close();
             } catch (SQLException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                System.out.println("THIJS: error in importGDAS: " + e.getMessage());
             }
         }
         return true;

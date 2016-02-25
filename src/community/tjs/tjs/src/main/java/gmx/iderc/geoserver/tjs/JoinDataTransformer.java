@@ -277,8 +277,6 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         start("JoinedOutputs");
 
                         // Thijs: create a WMS and WFS mechanism here. For output in all kinds of formats.
-                        // TODO: refactor for new stylename? Causes an stack overflow if handled in the handleMapStyling alone
-                        // Needs some more research
                         setUpWFSandWMSMechanism(frameworkInfo, gdas_datasetInfo, newStyleName);
 
                         end("JoinedOutputs");
@@ -387,8 +385,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                 end(TJS.Mechanism.getLocalPart());
             }
 
-            // Thijs: WORK IN PROGRESS
-            // Need to refactor code, to extract the datastore and featuretype creation code
+            // TODO: Need to refactor code, to extract the datastore and featuretype creation code
 
             private void setUpWFSandWMSMechanism(FrameworkInfo frameworkInfo, DatasetInfo datasetInfo, String newStyleName) throws IOException {
                 try {
@@ -405,21 +402,18 @@ public abstract class JoinDataTransformer extends TransformerBase {
 
                     // datasetInfo.getName()
                     String newFeatureTypeName = datasetInfo.getName();
-                    System.out.println("THIJS: newFeatureTypeName " + newFeatureTypeName);
                     // Catalog gsCatalog = getGeoserverCatalog();
-                    System.out.println("THIJS: datasetInfo.getDatasetUri() " + datasetInfo.getDatasetUri());
-                    System.out.println("THIJS: datasetInfo.getDataStore().getId(); " + datasetInfo.getDataStore().getId());
-                    // already existing layers in datsetore:
+
+                    // already existing layers in datastore:
                     Boolean ftExists = catalog.getDataset(datasetInfo.getDataStore().getId(), newFeatureTypeName) != null;
-                    System.out.println("THIJS: ftExists; " + ftExists.toString());
+
                     if (catalog.getDatasetByUri(datasetInfo.getDatasetUri()) != null && ftExists){
                         // TODO: check if layer really exists, otherwise, remove it?
                         // TODO: getDatasetByURI: the datasetURI is the same!!
-                        // also check if a featuretype already exists?
+                        // also check if a featuretype already exists
+
 
                     } else {
-                        // TODO: what if the datasetInfo is already there?
-
                         catalog.add(datasetInfo);
 
                         // if the temp datastore does not exist, create a new one
@@ -438,7 +432,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                                 // TODO: deal with existing datastores
                                 gsCatalog.add((DataStoreInfo)tempTJSStore);
                             } catch (Exception ex) {
-                                // TODO: logger
+                                Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.SEVERE, ex.getMessage());
                                 ex.printStackTrace();
                             }
                         }
@@ -453,6 +447,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                         FeatureTypeInfo featureTypeInfo = getFeatureTypeInfoIfExists(featureTypes, newFeatureTypeName);
 
                         if (featureTypeInfo == null) {
+
                             builder.setStore(tempTJSStore);
 
                             FeatureSource featureSource = (FeatureSource)tjs100DataStore.getFeatureSource(newFeatureTypeName);
@@ -460,6 +455,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
                             CoordinateReferenceSystem crs = ((TJSFeatureSource)featureSource).getCRS();
                             ReferencedEnvelope bounds = featureSource.getBounds();
                             featureTypeInfo.setNativeBoundingBox(bounds);
+
                             // TODO: what if we don't have a CRS / crs==null. What to do? Stop adding the featuretype?
                             featureTypeInfo.setNativeCRS(crs);
                             if (crs!=null) {
@@ -479,7 +475,10 @@ public abstract class JoinDataTransformer extends TransformerBase {
                                 layer.setDefaultStyle(defaultStyle);
                             }
                             gsCatalog.add(layer);
+                        } else {
+                            // reload layer?
                         }
+
                     }
                     // output for WMS
                     start("Output");
@@ -501,7 +500,6 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     end("Resource");
                     end("Output");
 
-                    // TODO: Thijs, is this correct TJS output?
                     // output for WFS
                     start("Output");
                     handleWFSMechanism();
@@ -521,9 +519,7 @@ public abstract class JoinDataTransformer extends TransformerBase {
 
 
                 } catch (Exception ex) {
-                    // TODO:proper logging
-                    // System.out.println("Error in creating WFS and WMS mechanims");
-                	LOGGER.severe(ex.getMessage());
+                    Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.SEVERE, ex.getMessage());
                     ex.printStackTrace();
                 }
 
@@ -696,13 +692,12 @@ public abstract class JoinDataTransformer extends TransformerBase {
             private String getLocalWMSUrl(String workspace) {
                 String baseURL = getBaseURL();
                 String wms;
-                // TODO: this is plain wrong, should only be at the end of the URL!
+
                 // so not replaceIgnoreCase
                 if (baseURL.toUpperCase().endsWith("/OWS")){
                     wms = replaceLastIgnoreCase(baseURL,  "/OWS", "/"+workspace + "/wms");
                 }else{
                     if (baseURL.toUpperCase().endsWith("/TJS")){
-                        // TODO: take into account http://tjs !!
                         // only the last part should be replaced, not all parts
                         wms = replaceLastIgnoreCase(baseURL,  "/TJS", "/"+workspace + "/wms");
                     }else{
@@ -745,48 +740,50 @@ public abstract class JoinDataTransformer extends TransformerBase {
             }
 
 
-            private WebMapServer createWebMapServer(FrameworkInfo frameworkInfo) {
-                try {
-                    LayerInfo layer = frameworkInfo.getAssociatedWMS();
-                    //esto me paece que es una fuente de error!, Alvaro Javier Fuentes Suarez
-                    //String prefixedLayerName = layer.getResource().getPrefixedName();
-                    //se hace así, Alvaro Javier Fuentes Suarez
-                    String layerName = layer.getName();
-                    String prefix = layer.getResource().getNamespace().getPrefix();
+//            private WebMapServer createWebMapServer(FrameworkInfo frameworkInfo) {
+//                try {
+//                    LayerInfo layer = frameworkInfo.getAssociatedWMS();
+//                    //esto me paece que es una fuente de error!, Alvaro Javier Fuentes Suarez
+//                    //String prefixedLayerName = layer.getResource().getPrefixedName();
+//                    //se hace así, Alvaro Javier Fuentes Suarez
+//                    String layerName = layer.getName();
+//                    String prefix = layer.getResource().getNamespace().getPrefix();
+//
+//                    CatalogBuilder builder = new CatalogBuilder(getGeoserverCatalog());
+//                    URL wmsServerUrl = new URL(getLocalWMSUrl(prefix));
+//                    //WebMapServer wms = null;
+//                    //Si no existe el store en el catalogo lo creo
+//                    WMSStoreInfo wmsStoreInfo = getGeoserverCatalog().getStoreByName(prefix, WMSStoreInfo.class);
+//                    if (wmsStoreInfo == null) {
+//                        wmsStoreInfo = builder.buildWMSStore(prefix);
+//                        wmsStoreInfo.setCapabilitiesURL(wmsServerUrl.toString());
+//                        wmsStoreInfo.setWorkspace(createTempWorkspace());
+//                        getGeoserverCatalog().add(wmsStoreInfo);
+//                    }
+//                    builder.setStore(wmsStoreInfo);
+//                    //no usar el prefixed!, Alvaro Javier Fuentes Suarez
+//                    //WMSLayerInfo wmsLayerInfo = builder.buildWMSLayer(prefixedLayerName);
+//                    //use reste!, Alvaro Javier Fuentes Suarez
+//                    WMSLayerInfo wmsLayerInfo = builder.buildWMSLayer(layerName);
+//                    WMSLayerInfo exists = getGeoserverCatalog().getResourceByStore(wmsStoreInfo, frameworkInfo.getAssociatedWMS().getName(), WMSLayerInfo.class);
+//                    if (exists != null) {
+//                        builder.updateWMSLayer(exists, wmsLayerInfo);
+//                    } else {
+//                        LayerInfo layerInfo = builder.buildLayer(wmsLayerInfo);
+//                        getGeoserverCatalog().add(wmsLayerInfo);
+//                        getGeoserverCatalog().add(layerInfo);
+//                    }
+//                    return wmsStoreInfo.getWebMapServer(new NullProgressListener());
+//                } catch (MalformedURLException ex) {
+//
+//                } catch (IOException ex) {
+//
+//                }
+//                return null;
+//            }
 
-                    CatalogBuilder builder = new CatalogBuilder(getGeoserverCatalog());
-                    URL wmsServerUrl = new URL(getLocalWMSUrl(prefix));
-                    //WebMapServer wms = null;
-                    //Si no existe el store en el catalogo lo creo
-                    WMSStoreInfo wmsStoreInfo = getGeoserverCatalog().getStoreByName(prefix, WMSStoreInfo.class);
-                    if (wmsStoreInfo == null) {
-                        wmsStoreInfo = builder.buildWMSStore(prefix);
-                        wmsStoreInfo.setCapabilitiesURL(wmsServerUrl.toString());
-                        wmsStoreInfo.setWorkspace(createTempWorkspace());
-                        getGeoserverCatalog().add(wmsStoreInfo);
-                    }
-                    builder.setStore(wmsStoreInfo);
-                    //no usar el prefixed!, Alvaro Javier Fuentes Suarez
-                    //WMSLayerInfo wmsLayerInfo = builder.buildWMSLayer(prefixedLayerName);
-                    //use reste!, Alvaro Javier Fuentes Suarez
-                    WMSLayerInfo wmsLayerInfo = builder.buildWMSLayer(layerName);
-                    WMSLayerInfo exists = getGeoserverCatalog().getResourceByStore(wmsStoreInfo, frameworkInfo.getAssociatedWMS().getName(), WMSLayerInfo.class);
-                    if (exists != null) {
-                        builder.updateWMSLayer(exists, wmsLayerInfo);
-                    } else {
-                        LayerInfo layerInfo = builder.buildLayer(wmsLayerInfo);
-                        getGeoserverCatalog().add(wmsLayerInfo);
-                        getGeoserverCatalog().add(layerInfo);
-                    }
-                    return wmsStoreInfo.getWebMapServer(new NullProgressListener());
-                } catch (MalformedURLException ex) {
-
-                } catch (IOException ex) {
-
-                }
-                return null;
-            }
             // TODO: move to factory?
+
             private TJS_1_0_0_DataStore createTJSDataStore(FrameworkInfo frameworkInfo) {
                 try {
                     Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.FINE,"Creating TJS Data store for WFS");

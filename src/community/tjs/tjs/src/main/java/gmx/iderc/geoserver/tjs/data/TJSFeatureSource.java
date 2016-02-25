@@ -90,7 +90,7 @@ public class TJSFeatureSource extends AbstractFeatureSource {           // not C
 
     public final ReferencedEnvelope getBounds ()  throws IOException {
         CoordinateReferenceSystem crs = getCRS();
-        // Thijs: using the cacheBounds seems to help in the heap space errors? Caused by connection usage maybe?
+        // Thijs: using the cacheBounds seems to help in the heap space errors
         if (crs != null ) {
             if (cacheBounds!=null) {
                 return cacheBounds;

@@ -30,7 +30,7 @@ public class HSQLDB_GDAS_Cache {
 
     static private boolean existCacheTables() throws SQLException {
         // Thijs Brentjens: should there be a schema in here or not?
-        // now  without schemaName?
+        // now  without schemaName, just asume PUBLIC
         ResultSet tables = getConnection().getMetaData().getTables(null, null, "CACHE", new String[]{"TABLE"});
 
         boolean exist = tables.next();
@@ -92,8 +92,11 @@ public class HSQLDB_GDAS_Cache {
 
     static public String existGDAS(String url){
         try {
-            Statement statement = getConnection().createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT TABLENAME FROM CACHE WHERE GDAS_URL='" + url + "';");
+            // Statement statement = getConnection().createStatement();
+            PreparedStatement statement = getConnection().prepareStatement("SELECT TABLENAME FROM CACHE WHERE GDAS_URL=?;") ;
+            // ResultSet resultSet = statement.executeQuery("SELECT TABLENAME FROM CACHE WHERE GDAS_URL='" + url + "';");
+            statement.setString(1,url);
+            ResultSet resultSet = statement.executeQuery();
             boolean exists = resultSet.next();
             String tableName = null;
             if (exists) {
@@ -103,7 +106,8 @@ public class HSQLDB_GDAS_Cache {
             statement.closeOnCompletion();
             return tableName;
         } catch (SQLException e) {
-            e.printStackTrace();  
+            e.printStackTrace();
+
         }
         return null;
     }
