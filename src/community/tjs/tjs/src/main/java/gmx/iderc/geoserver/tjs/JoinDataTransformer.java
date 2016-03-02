@@ -393,6 +393,53 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     WorkspaceInfo tempWorkspaceInfo = createTempWorkspace();
                     Catalog gsCatalog = getGeoserverCatalog();
 
+                    String newFeatureTypeName = datasetInfo.getName();
+
+                    // already existing layers in datastore:
+                    Boolean ftExists = catalog.getDataset(datasetInfo.getDataStore().getId(), newFeatureTypeName) != null;
+                    //  If the dataset is already known and the featuretype already exists, then remove the layer and featuretypeinfo from
+                    // Geoserver and the TJS catalog
+                    if (catalog.getDatasetByUri(datasetInfo.getDatasetUri()) != null && ftExists){
+                        // For now: remove everything from the catalog and after that, recreate the:
+                        // store
+                        // layer
+                        // featuretype
+//                        List<DataStoreInfo> tjsTempGSDataStores = gsCatalog.getDataStoresByWorkspace(tempWorkspaceInfo); // TJSExtension.TJS_TEMP_WORKSPACE
+
+//                        String tempDataStoreName = datasetInfo.getFramework().getName();
+//                        DataStoreInfo ds = getTempDatastoreIfExists(tjsTempGSDataStores, tempDataStoreName);
+//
+//                        // also: check if we have a better one?
+//                        // check if this is the right datastore: it could be the case the name is the same for TJS, if the same framework is used.
+//                        // Only throw the datastore away, if the featuretype we are looking for is inside this store.
+//
+//                        if (tjsTempGSDataStores!=null ) {
+//                            for (DataStoreInfo dataStoreInfo : tjsTempGSDataStores) {
+//                                if (dataStoreInfo.getName().equalsIgnoreCase(tempDataStoreName)) {
+//                                    // also check if this one contains the feature?
+//                                    FeatureTypeInfo fti = gsCatalog.getResourceByStore(dataStoreInfo,   newFeatureTypeName , FeatureTypeInfo.class );
+//                                    if (fti!=null) {
+//                                        ds = dataStoreInfo;
+//                                    }
+//                                }
+//                            }
+//                        }
+//
+                        LayerInfo layerInfo = gsCatalog.getLayerByName(newFeatureTypeName)    ;
+                        gsCatalog.remove(layerInfo);
+
+                        FeatureTypeInfo ftInfo = gsCatalog.getFeatureTypeByName(newFeatureTypeName)    ;
+                        gsCatalog.remove(ftInfo);
+                        // What if we don't remove the ds?  This seems to be fine
+                        /*
+                        gsCatalog.remove((DataStoreInfo) ds);
+                        System.out.println("Thijs: removed form GS catalog");
+                         */
+                        // remove the datasetiInfo, because we get some new info this time
+                        catalog.remove(datasetInfo.getDataStore());
+
+                    }
+
                     CatalogBuilder builder = new CatalogBuilder(gsCatalog);
 
                     TJS_1_0_0_DataStore tjs100DataStore = createTJSDataStore(frameworkInfo);
@@ -400,86 +447,77 @@ public abstract class JoinDataTransformer extends TransformerBase {
                     TJSStore tempTJSStore = new TJSStore(tjs100DataStore,gsCatalog);
                     tempTJSStore.setWorkspace(tempWorkspaceInfo);
 
-                    // datasetInfo.getName()
-                    String newFeatureTypeName = datasetInfo.getName();
-                    // Catalog gsCatalog = getGeoserverCatalog();
+                    catalog.add(datasetInfo);
 
-                    // already existing layers in datastore:
-                    Boolean ftExists = catalog.getDataset(datasetInfo.getDataStore().getId(), newFeatureTypeName) != null;
+                    // if the temp datastore does not exist, create a new one
 
-                    if (catalog.getDatasetByUri(datasetInfo.getDatasetUri()) != null && ftExists){
-                        // TODO: check if layer really exists, otherwise, remove it?
-                        // TODO: getDatasetByURI: the datasetURI is the same!!
-                        // also check if a featuretype already exists
+                    List<DataStoreInfo> tjsTempDataStores = gsCatalog.getDataStoresByWorkspace(tempWorkspaceInfo); // TJSExtension.TJS_TEMP_WORKSPACE
 
+                    String tempDataStoreName = tempTJSStore.getName();
 
-                    } else {
-                        catalog.add(datasetInfo);
-
-                        // if the temp datastore does not exist, create a new one
-
-                        List<DataStoreInfo> tjsTempDataStores = gsCatalog.getDataStoresByWorkspace(tempWorkspaceInfo); // TJSExtension.TJS_TEMP_WORKSPACE
-
-                        String tempDataStoreName = tempTJSStore.getName();
-
-                        DataStoreInfo dsInfoNew = getTempDatastoreIfExists(tjsTempDataStores, tempDataStoreName);
-
-                        if (dsInfoNew == null) {
-                            builder.setWorkspace(tempWorkspaceInfo);
-                            dsInfoNew = builder.buildDataStore(TJSExtension.TJS_TEMP_WORKSPACE) ;
-                            dsInfoNew.setName(tempDataStoreName);
-                            try {
-                                // TODO: deal with existing datastores
-                                gsCatalog.add((DataStoreInfo)tempTJSStore);
-                            } catch (Exception ex) {
-                                Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.SEVERE, ex.getMessage());
-                                ex.printStackTrace();
-                            }
+                    DataStoreInfo dsInfoNew = getTempDatastoreIfExists(tjsTempDataStores, tempDataStoreName);
+                    // add a datastore if there does not seem to be one already
+                    if (dsInfoNew == null) {
+                        builder.setWorkspace(tempWorkspaceInfo);
+                        dsInfoNew = builder.buildDataStore(TJSExtension.TJS_TEMP_WORKSPACE) ;
+                        dsInfoNew.setName(tempDataStoreName);
+                        try {
+                            gsCatalog.add((DataStoreInfo)tempTJSStore);
+                        } catch (Exception ex) {
+                            Logger.getLogger(JoinDataTransformer.class.getName()).log(Level.SEVERE, ex.getMessage());
+                            ex.printStackTrace();
                         }
-
-                        // Create a full Geoserver datastore and layer, if tge featuretype is not available yet
-                        // TODO: decide what to do if the JoinData request is processed again, but then with another GDAS data content
-                        // Should there be a new layer or just an updaye of the cache
-                        // Should it be able to clear the cache, using a parameter maybe?  This is part of the TJS spec?
-
-                        List<FeatureTypeInfo> featureTypes = gsCatalog.getResourcesByStore(dsInfoNew, FeatureTypeInfo.class);
-                        // newFeatureTypeName was: datasetInfo.getName()
-                        FeatureTypeInfo featureTypeInfo = getFeatureTypeInfoIfExists(featureTypes, newFeatureTypeName);
-
-                        if (featureTypeInfo == null) {
-
-                            builder.setStore(tempTJSStore);
-
-                            FeatureSource featureSource = (FeatureSource)tjs100DataStore.getFeatureSource(newFeatureTypeName);
-                            featureTypeInfo = builder.buildFeatureType(featureSource) ;
-                            CoordinateReferenceSystem crs = ((TJSFeatureSource)featureSource).getCRS();
-                            ReferencedEnvelope bounds = featureSource.getBounds();
-                            featureTypeInfo.setNativeBoundingBox(bounds);
-
-                            // TODO: what if we don't have a CRS / crs==null. What to do? Stop adding the featuretype?
-                            featureTypeInfo.setNativeCRS(crs);
-                            if (crs!=null) {
-                                featureTypeInfo.setLatLonBoundingBox(bounds.transform(CRS.decode("EPSG:4326"), true)); // true: lenient?
-                            }
-
-                            // explicitly add the SRS code
-                            featureTypeInfo.setSRS(((TJSFeatureSource) featureSource).getSRS());
-                            gsCatalog.add(featureTypeInfo);
-                            builder.setWorkspace(tempWorkspaceInfo);
-                            builder.setStore(tempTJSStore);
-
-                            builder.setupBounds(featureTypeInfo, featureSource);
-                            LayerInfo layer = builder.buildLayer(featureTypeInfo);
-                            if (newStyleName != null) {
-                                StyleInfo defaultStyle = gsCatalog.getStyleByName(newStyleName);
-                                layer.setDefaultStyle(defaultStyle);
-                            }
-                            gsCatalog.add(layer);
-                        } else {
-                            // reload layer?
-                        }
-
                     }
+
+                    // Create a full Geoserver datastore and layer, if the featuretype is not available yet
+
+                    List<FeatureTypeInfo> featureTypes = gsCatalog.getResourcesByStore(dsInfoNew, FeatureTypeInfo.class);
+                    FeatureTypeInfo featureTypeInfo = getFeatureTypeInfoIfExists(featureTypes, newFeatureTypeName);
+
+                    if (featureTypeInfo == null) {
+
+                        builder.setStore(tempTJSStore);
+
+                        FeatureSource featureSource = (FeatureSource)tjs100DataStore.getFeatureSource(newFeatureTypeName);
+                        featureTypeInfo = builder.buildFeatureType(featureSource) ;
+                        CoordinateReferenceSystem crs = ((TJSFeatureSource)featureSource).getCRS();
+                        ReferencedEnvelope bounds = featureSource.getBounds();
+                        featureTypeInfo.setNativeBoundingBox(bounds);
+
+                        // TODO: what if we don't have a CRS / crs==null. What to do? Stop adding the featuretype?
+                        featureTypeInfo.setNativeCRS(crs);
+                        if (crs!=null) {
+                            featureTypeInfo.setLatLonBoundingBox(bounds.transform(CRS.decode("EPSG:4326"), true)); // true: lenient?
+                        }
+
+                        // explicitly add the SRS code
+                        featureTypeInfo.setSRS(((TJSFeatureSource) featureSource).getSRS());
+                        gsCatalog.add(featureTypeInfo);
+                        builder.setWorkspace(tempWorkspaceInfo);
+                        builder.setStore(tempTJSStore);
+
+                        builder.setupBounds(featureTypeInfo, featureSource);
+                        LayerInfo layer = builder.buildLayer(featureTypeInfo);
+
+                        if (newStyleName != null) {
+                            StyleInfo defaultStyle = gsCatalog.getStyleByName(newStyleName);
+                            layer.setDefaultStyle(defaultStyle);
+                        } else {
+                            // get the style of the originating layer
+                            try {
+                                String sourceName = frameworkInfo.getFeatureType().getNativeName();
+                                StyleInfo sourceStyle = gsCatalog.getLayerByName(sourceName).getDefaultStyle() ;
+                                layer.setDefaultStyle(sourceStyle);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        gsCatalog.add(layer);
+                    } else {
+                        // reload layer?
+                    }
+
+                    // }
                     // output for WMS
                     start("Output");
 

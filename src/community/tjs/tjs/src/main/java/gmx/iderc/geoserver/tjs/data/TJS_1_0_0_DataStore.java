@@ -69,6 +69,7 @@ public class TJS_1_0_0_DataStore extends AbstractDataStore {        // AbstractD
           return this.getTypeNames();
     }
 
+
     public SimpleFeatureType getSchema(String typeName) {
         if (storeTypeNames.containsKey(typeName)) {
             return storeTypeNames.get(typeName);
