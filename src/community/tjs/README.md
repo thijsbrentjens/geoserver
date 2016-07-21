@@ -47,11 +47,15 @@ Compilation
 Follow the general build instructions of Geoserver.
 To build the TJS plugin seperately, go to the directory 
 
-```src/community/tjs/```
+```
+src/community/tjs/
+```
 
 and build using the regular command:
 
-```mvn clean install -DskipTests```
+```
+mvn clean install -DskipTests
+```
 
 Note: tests will probably fail at the moment because of Postgres connections in some of the tests. Skipping the tests will help for now. This is a workaround, improve tests and test coverage is still necessary.
 
