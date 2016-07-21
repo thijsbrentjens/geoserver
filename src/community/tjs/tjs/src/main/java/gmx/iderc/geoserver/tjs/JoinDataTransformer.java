@@ -392,52 +392,21 @@ public abstract class JoinDataTransformer extends TransformerBase {
 
                     WorkspaceInfo tempWorkspaceInfo = createTempWorkspace();
                     Catalog gsCatalog = getGeoserverCatalog();
-
                     String newFeatureTypeName = datasetInfo.getName();
 
                     // already existing layers in datastore:
                     Boolean ftExists = catalog.getDataset(datasetInfo.getDataStore().getId(), newFeatureTypeName) != null;
-                    //  If the dataset is already known and the featuretype already exists, then remove the layer and featuretypeinfo from
+                    // If the dataset is already known and the featuretype already exists, then remove the layer and featuretypeinfo from
                     // Geoserver and the TJS catalog
-                    if (catalog.getDatasetByUri(datasetInfo.getDatasetUri()) != null && ftExists){
-                        // For now: remove everything from the catalog and after that, recreate the:
-                        // store
-                        // layer
-                        // featuretype
-//                        List<DataStoreInfo> tjsTempGSDataStores = gsCatalog.getDataStoresByWorkspace(tempWorkspaceInfo); // TJSExtension.TJS_TEMP_WORKSPACE
-
-//                        String tempDataStoreName = datasetInfo.getFramework().getName();
-//                        DataStoreInfo ds = getTempDatastoreIfExists(tjsTempGSDataStores, tempDataStoreName);
-//
-//                        // also: check if we have a better one?
-//                        // check if this is the right datastore: it could be the case the name is the same for TJS, if the same framework is used.
-//                        // Only throw the datastore away, if the featuretype we are looking for is inside this store.
-//
-//                        if (tjsTempGSDataStores!=null ) {
-//                            for (DataStoreInfo dataStoreInfo : tjsTempGSDataStores) {
-//                                if (dataStoreInfo.getName().equalsIgnoreCase(tempDataStoreName)) {
-//                                    // also check if this one contains the feature?
-//                                    FeatureTypeInfo fti = gsCatalog.getResourceByStore(dataStoreInfo,   newFeatureTypeName , FeatureTypeInfo.class );
-//                                    if (fti!=null) {
-//                                        ds = dataStoreInfo;
-//                                    }
-//                                }
-//                            }
-//                        }
-//
+                    Boolean inCatalog = catalog.getDatasetByUri(datasetInfo.getDatasetUri()) != null;
+                    if (inCatalog && ftExists){
                         LayerInfo layerInfo = gsCatalog.getLayerByName(newFeatureTypeName)    ;
                         gsCatalog.remove(layerInfo);
 
                         FeatureTypeInfo ftInfo = gsCatalog.getFeatureTypeByName(newFeatureTypeName)    ;
                         gsCatalog.remove(ftInfo);
-                        // What if we don't remove the ds?  This seems to be fine
-                        /*
-                        gsCatalog.remove((DataStoreInfo) ds);
-                        System.out.println("Thijs: removed form GS catalog");
-                         */
-                        // remove the datasetiInfo, because we get some new info this time
+                        // remove the datasetInfo, because we get some new info this time
                         catalog.remove(datasetInfo.getDataStore());
-
                     }
 
                     CatalogBuilder builder = new CatalogBuilder(gsCatalog);

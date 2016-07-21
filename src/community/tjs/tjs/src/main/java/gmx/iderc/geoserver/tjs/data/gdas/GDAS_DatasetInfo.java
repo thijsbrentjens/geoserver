@@ -82,7 +82,9 @@ public class GDAS_DatasetInfo extends ReadonlyDatasetInfo {
 
     @Override
     public String getDatasetUri() {
-        return gdasType.getFramework().getDataset().getDatasetURI();  //To change body of implemented methods use File | Settings | File Templates.
+        // Thijs: change the dataseturi: add the framework, this
+        String datsetUri = gdasType.getFramework().getFrameworkURI().concat("?DatasetURI=").concat(gdasType.getFramework().getDataset().getDatasetURI());
+        return datsetUri;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

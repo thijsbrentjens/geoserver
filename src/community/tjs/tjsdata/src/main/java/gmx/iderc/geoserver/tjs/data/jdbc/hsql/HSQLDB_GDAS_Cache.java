@@ -231,7 +231,14 @@ public class HSQLDB_GDAS_Cache {
             // Let's try without it
             // tableName = schemaName+gdasType.getFramework().getDataset().getTitle();
             // TODO: Thijs: document how the filename is determined: use the Title of the GDAS-file + part of the md5 hash of the URL
+            // TODO: a hash for the dataset URI instead of the title?
+            // Or a hash for the frameowrkURI + datasetURI?
             tableName = gdasType.getFramework().getDataset().getTitle();
+            // TODO: include the framework ID or some prefix here? To guarantee a featuretype is unique for the data..
+            // This is a hard thing to tackle: how to briefly identify the framework to make the featuretypename unique?
+            String frameworkPrefix = String.valueOf(gdasType.getFramework().getFrameworkURI().hashCode());
+            frameworkPrefix = "f" + frameworkPrefix.substring(0,8);
+            tableName = frameworkPrefix + "_" + tableName;
             // replace "-" by "_" in the table_name
             // make the table name no longer than X chars
             tableName = getSafeTableName(tableName);
