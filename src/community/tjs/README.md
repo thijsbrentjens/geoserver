@@ -61,11 +61,11 @@ Note: tests will probably fail at the moment because of Postgres connections in 
 
 After compilation, copy the following jars to {geoserver}/WEB-INF/lib/ :
 
-net.opengis.tjs/target/net.opengis.tjs-{gt.version}.jar
-tjs/target/tjs-core-{tjs.version}.jar
-tjsdata/target/tjsdata-{tjs.version}.jar
-tjs-web/target/tjs-web-{tjs.version}.jar
-xsd-tjs/target/gt-xsd-tjs-{gt.version}.jar
+* net.opengis.tjs/target/net.opengis.tjs-{gt.version}.jar
+* tjs/target/tjs-core-{tjs.version}.jar
+* tjsdata/target/tjsdata-{tjs.version}.jar
+* tjs-web/target/tjs-web-{tjs.version}.jar
+* xsd-tjs/target/gt-xsd-tjs-{gt.version}.jar
 
 
 Using Eclipse
