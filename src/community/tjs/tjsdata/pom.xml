@@ -9,11 +9,6 @@
     <name>Geomix TJS Datasource suport(tjs-data)</name>
     <url>http://maven.apache.org</url>
     <packaging>jar</packaging>
-    <!--parent>
-        <groupId>gmx.iderc.geoserver</groupId>
-        <artifactId>tjs</artifactId>
-        <version>1.1-SNAPSHOT</version>
-    </parent-->
 
 <repositories>
   <repository>
@@ -109,8 +104,6 @@
         <dependency>
             <groupId>org.geotools.xsd</groupId>
             <artifactId>gt-xsd-tjs</artifactId>
-            <!--
-            <version>12-SNAPSHOT</version> -->
             <version>13.3</version>
         </dependency>
         <dependency>
@@ -127,8 +120,6 @@
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-main</artifactId>
-            <!--
-            <version>12-SNAPSHOT</version> -->
             <version>13.3</version>
         </dependency>
         <dependency>

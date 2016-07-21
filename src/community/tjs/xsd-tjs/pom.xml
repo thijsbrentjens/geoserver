@@ -24,9 +24,6 @@
     <!-- =========================================================== -->
     <groupId>org.geotools.xsd</groupId>
     <artifactId>gt-xsd-tjs</artifactId>
-    <!--
-    <version>12-SNAPSHOT</version>
-    -->
     <version>13.3</version>
     <packaging>jar</packaging>
     <name>TJS XML Support(xsd-tjs)</name>
@@ -129,6 +126,15 @@
             <organization>GeoMIX</organization>
             <roles>
                 <role>Java Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Thijs Brentjens</name>
+            <id>thijs</id>
+            <email>t.brentjens@geonovum.nl</email>
+            <organization>Geonovum</organization>
+            <roles>
+                <role>Developer</role>
             </roles>
         </developer>
     </developers>
