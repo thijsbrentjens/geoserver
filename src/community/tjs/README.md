@@ -1,24 +1,22 @@
-Geoserver for TJS
+Table Joining Services extension
 =====================
-Geoserver TJS repository.
-
-The community plugin TJS will add support for Table Joining Services to Geoserver. Code is based on code of GeoCuba/GeoMix, imported by Thijs Brentjens on request of GeoCuba/GeoMix. 
+The community plugin TJS will add support for Table Joining Services v 1.0.0 to Geoserver. Code is based on code of GeoCuba/GeoMix, imported by Thijs Brentjens (for Geonovum) on request of GeoCuba/GeoMix. Support for WFS output and refactoring to imrpove WMS support has been done for Geonovum.
 
 This extension is under development. Please read this carefully. Any feedback is welcome.
 
 Features
 ========
-The TJS extension adds TJS support to Geoserver (2.6.x at the moment). It adds TJS operations to join data and adds web administration options. The web admin allows for management / configuration of:
+The TJS extension adds TJS support to Geoserver (2.7.x at the moment). It adds TJS operations to join data and adds web administration options. The web admin allows for management / configuration of:
 - spatial frameworks (spatial datasets to join data on) and non-spatial tabular data to be published in GDAS encoding
 - pre-configured joins.
 
-The TJS OGC webservice interface supports almost all TJS operations. It allows for example for:
+The TJS OGC webservice interface of this extension supports almost all TJS operations. It allows for example for:
 - GetCapabilities
 - getting data in GDAS encoding
 - creating joins using JoinData
 - output of joins as WMS layers, WFS featuretypes. The TJS extension has (some) support for SLD, but this is untested currently
 
-Te above features have initially been developed by GeoCuba/GeoMix. Geonovum has added WFS support and has rewritten parts of the source code.
+The above features have initially been developed by GeoCuba/GeoMix. Geonovum has added WFS support and has rewritten parts of the source code.
 
 Work in Progress
 ==========
@@ -28,11 +26,9 @@ t dot brentjens at geonovum dot nl.
 
 Among things to do are:
 
-- improve stability of the configuration and restarting. On some systems there have been issues with reloading the config.
 - support for management of joined output files and removing joins / clearing the cache after a pre-configured time
-- access restrictions on operations (TODO: test if Geoserver securtiy system works properly already)
 - user manual
-- fix tests for the postgres connection of data stores
+- fix tests for the postgres connection of data stores, make it file-based
 
 Related projects
 ===========
@@ -40,22 +36,33 @@ For demonstraton and test purposes a basic tool is developed. This tool allows u
 
 See https://github.com/joostvenema/tjs-demonstrator for the demonstrator
 
+The Geodetic institute of Slovenia has created support for TJS in it's STAGE client. A Javascript version is available here: https://bitbucket.org/ginst/jstjs/
+
 Installation
 =====================
-The extra libraries from the TJS extension can be build from the community/tjs/ directory, see Compilation below.
+The libraries for the TJS extension can be build from the community/tjs/ directory, see Compilation below.
 
 Compilation
 =====================
 Follow the general build instructions of Geoserver.
 To build the TJS plugin seperately, go to the directory 
 
-src/community/tjs/
+```src/community/tjs/```
 
 and build using the regular command:
 
-mvn clean install -DskipTests
+```mvn clean install -DskipTests```
 
-Note: tests will probably fail at the moment because of Postgres connections in some of the tests. Skipping the tests will help for now.
+Note: tests will probably fail at the moment because of Postgres connections in some of the tests. Skipping the tests will help for now. This is a workaround, improve tests and test coverage is still necessary.
+
+After compilation, copy the following jars to {geoserver}/WEB-INF/lib/ :
+
+net.opengis.tjs/target/net.opengis.tjs-{gt.version}.jar
+tjs/target/tjs-core-{tjs.version}.jar
+tjsdata/target/tjsdata-{tjs.version}.jar
+tjs-web/target/tjs-web-{tjs.version}.jar
+xsd-tjs/target/gt-xsd-tjs-{gt.version}.jar
+
 
 Using Eclipse
 =====================
